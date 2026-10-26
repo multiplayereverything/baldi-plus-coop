@@ -1,0 +1,20 @@
+{
+  "contract_id": "baldi-together-0.2.2-player-sprites",
+  "title": "0.2.2 loader builds, live sprite regression and inspected world capture",
+  "created_by": "Codex",
+  "required_assurance": "isolated_local",
+  "checks": [
+    { "id": "transport-passed", "type": "json_value", "params": { "path": "artifacts/tests/results.json", "pointer": "/passed", "equals": 22 } },
+    { "id": "transport-failed", "type": "json_value", "params": { "path": "artifacts/tests/results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "live-passed", "type": "json_value", "params": { "path": "artifacts/tests/live-results.json", "pointer": "/passed", "equals": 19 } },
+    { "id": "live-failed", "type": "json_value", "params": { "path": "artifacts/tests/live-results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "sprite-avatar", "type": "json_value", "params": { "path": "artifacts/tests/live-results.json", "pointer": "/checks/sprite_avatar", "equals": true } },
+    { "id": "sprite-directions", "type": "json_value", "params": { "path": "artifacts/tests/live-results.json", "pointer": "/checks/sprite_directions", "equals": true } },
+    { "id": "sprite-walking", "type": "json_value", "params": { "path": "artifacts/tests/live-results.json", "pointer": "/checks/sprite_walk", "equals": true } },
+    { "id": "sprite-idle", "type": "json_value", "params": { "path": "artifacts/tests/live-results.json", "pointer": "/checks/sprite_idle", "equals": true } },
+    { "id": "bepinex-build", "type": "file_exists", "params": { "path": "artifacts/BepInEx/BaldiTogether.BepInEx.dll" } },
+    { "id": "melon-build", "type": "file_exists", "params": { "path": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll" } },
+    { "id": "supplied-sheet", "type": "file_exists", "params": { "path": "assets/player-sheet.png" } },
+    { "id": "player-capture", "type": "file_exists", "params": { "path": "docs/player-sprite-0.2.2.png" } }
+  ]
+}

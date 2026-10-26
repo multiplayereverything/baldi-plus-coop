@@ -1,0 +1,62 @@
+{
+    "checks":  [
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/contact-bepinex-results.json",
+                                      "pointer":  "/passed",
+                                      "equals":  12
+                                  },
+                       "id":  "contact-bepinex-results.json-passed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/contact-bepinex-results.json",
+                                      "pointer":  "/failed",
+                                      "equals":  0
+                                  },
+                       "id":  "contact-bepinex-results.json-failed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/contact-melonloader-results.json",
+                                      "pointer":  "/passed",
+                                      "equals":  12
+                                  },
+                       "id":  "contact-melonloader-results.json-passed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/contact-melonloader-results.json",
+                                      "pointer":  "/failed",
+                                      "equals":  0
+                                  },
+                       "id":  "contact-melonloader-results.json-failed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/contact-console-results.json",
+                                      "pointer":  "/passed",
+                                      "equals":  7
+                                  },
+                       "id":  "contact-console-results.json-passed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/contact-console-results.json",
+                                      "pointer":  "/failed",
+                                      "equals":  0
+                                  },
+                       "id":  "contact-console-results.json-failed",
+                       "type":  "json_value"
+                   }
+               ],
+    "title":  "Native sight filtering and capture with spectating host on two floors",
+    "created_by":  "Codex",
+    "required_assurance":  "isolated_local",
+    "contract_id":  "baldi-together-0.5.3-contact"
+}

@@ -1,0 +1,13 @@
+{
+  "contract_id": "baldi-together-0.4.5-sprite-stack",
+  "title": "Player and NPC camera ordering",
+  "created_by": "Codex",
+  "required_assurance": "isolated_local",
+  "checks": [
+    { "id": "stack-passed", "type": "json_value", "params": { "path": "artifacts/tests/sprite-stack-results.json", "pointer": "/passed", "equals": 5 } },
+    { "id": "stack-failed", "type": "json_value", "params": { "path": "artifacts/tests/sprite-stack-results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "stack-regression", "type": "json_value", "params": { "path": "artifacts/tests/sprite-stack-results.json", "pointer": "/checks/legacy-regression-reproduced", "equals": true } },
+    { "id": "bepinex-build", "type": "file_exists", "params": { "path": "artifacts/BepInEx/BaldiTogether.BepInEx.dll" } },
+    { "id": "melon-build", "type": "file_exists", "params": { "path": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll" } }
+  ]
+}

@@ -1,0 +1,4 @@
+# Media and historical test contracts add nothing to the code map.
+*.png
+*.wav
+tests/watch-contract*.json

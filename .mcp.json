@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "watch-skill": {
+      "command": "C:/Program Files (x86)/Steam/steamapps/common/Baldi's Basics Plus/MultiplayerMod/.venv/Scripts/watch-skill.exe",
+      "args": ["serve"],
+      "env": { "WATCHSKILL_DATA_DIR": "C:/Program Files (x86)/Steam/steamapps/common/Baldi's Basics Plus/MultiplayerMod/private/watch-data" }
+    }
+  }
+}

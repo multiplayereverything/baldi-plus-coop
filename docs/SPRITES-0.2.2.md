@@ -1,0 +1,15 @@
+# Player sprite, 0.2.2
+
+The user supplied a 720x1475 RGBA character sheet and requested it as the player sprite. The original PNG was copied byte-for-byte to `assets/player-sheet.png` and embedded as `BaldiTogether.PlayerSheet.png` in each loader DLL. The complete PNG byte sequence was verified inside both builds. Source attribution and its SHA256 are in `assets/README.md` (release `ARTWORK.md`).
+
+The old remote capsules are replaced with upright SpriteRenderers. Four directions have four frames each: front 0/1/2/3, back 4/5/6/7, left 8/9/12/13, and right 10/11/14/15. Runtime rectangles exclude the left-side captions. The source image is not edited, recolored or regenerated. The shared texture/material are loaded once and cleaned up when the mod runtime is destroyed.
+
+The displayed direction depends on the remote player's facing relative to the local player's camera. Pose messages use the local camera-base yaw. Traveled distance advances walking frames, a stationary pose returns to idle, and large teleports reset motion. Billboarding keeps the sprite upright; each frame's pivot is at the feet, five units below the player's entity origin. Player names remain above the head. All players share the supplied artwork and keep their individual names.
+
+The fresh BepInEx host / MelonLoader client regression adds four checks to the existing fifteen: both processes have one sprite avatar and sixteen frames with transparent corners; the host observes all four view directions; all four walking frames appear; both processes observe idle. These checks inspect actual runtime component state. The explicit lab tour positions the client near the host and supplies controlled facing through pose messages; it is not physical mouse/keyboard testing.
+
+`player-sprite-0.2.2.png` is an inspected in-game world-camera capture showing the supplied art, transparent background, excluded captions, and grounded feet. The first ScreenCapture attempt produced black images; reading GlobalCam's texture then exposed a stale name-menu cache. The final diagnostic path renders the live player camera into a temporary texture after the frame and restores the previous target. The game also uses manual camera rendering; the API behavior is documented by [Unity Camera.Render](https://docs.unity3d.com/2020.3/Documentation/ScriptReference/Camera.Render.html). This evidence is a world-camera render, without the IMGUI HUD/lobby overlay.
+
+Both loader builds compile. The regression reports and the Watch contract distinguish file/component checks from the screenshot's visual inspection. Separate-PC testing, physical input traversal and broad game-system coverage retain the limitations described in README.md.
+
+Final result: 22 transport/claim checks, 19 live checks and four rejection probes pass. The accepted client remains connected. Watch Skill isolated-local contract v6 passes with receipt `vr_693d0e357a97`. The installed BepInEx plugin matches its release artifact, and the game's original assembly hash is unchanged.

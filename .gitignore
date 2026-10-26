@@ -1,0 +1,12 @@
+deps/
+private/
+toolkits/
+bin/
+obj/
+artifacts/
+*.user
+*.log
+__pycache__/
+.venv/
+.claude/
+graphify-out/

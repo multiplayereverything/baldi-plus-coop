@@ -1,0 +1,14 @@
+{
+  "contract_id": "baldi-together-0.2-validation",
+  "title": "0.2.0 transport, supply claims and live game report",
+  "created_by": "Codex",
+  "required_assurance": "isolated_local",
+  "checks": [
+    { "id": "transport-passed", "type": "json_value", "params": { "path": "artifacts/tests/results.json", "pointer": "/passed", "equals": 22 } },
+    { "id": "transport-failed", "type": "json_value", "params": { "path": "artifacts/tests/results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "live-passed", "type": "json_value", "params": { "path": "artifacts/tests/live-results.json", "pointer": "/passed", "equals": 14 } },
+    { "id": "live-failed", "type": "json_value", "params": { "path": "artifacts/tests/live-results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "bepinex-build", "type": "file_exists", "params": { "path": "artifacts/BepInEx/BaldiTogether.BepInEx.dll" } },
+    { "id": "melon-build", "type": "file_exists", "params": { "path": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll" } }
+  ]
+}

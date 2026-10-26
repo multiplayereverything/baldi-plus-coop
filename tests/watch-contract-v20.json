@@ -1,0 +1,12 @@
+{
+  "contract_id": "baldi-together-0.4.11-page-dissolves",
+  "title": "Native dissolve across Multiplayer navigation",
+  "created_by": "Codex",
+  "required_assurance": "isolated_local",
+  "checks": [
+    { "id": "page-passed", "type": "json_value", "params": { "path": "artifacts/tests/page-transition-results.json", "pointer": "/passed", "equals": 47 } },
+    { "id": "page-failed", "type": "json_value", "params": { "path": "artifacts/tests/page-transition-results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "bepinex-build", "type": "file_exists", "params": { "path": "artifacts/BepInEx/BaldiTogether.BepInEx.dll" } },
+    { "id": "melon-build", "type": "file_exists", "params": { "path": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll" } }
+  ]
+}

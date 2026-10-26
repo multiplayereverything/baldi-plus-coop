@@ -1,0 +1,51 @@
+{
+  "run_id": "vr_bab679c38ecb",
+  "verdict": "pass",
+  "assurance": "isolated_local",
+  "limitations": [],
+  "signature_status": "unsigned_hash_bound",
+  "checks": [
+    {
+      "id": "transport-passed",
+      "status": "pass",
+      "required": true,
+      "summary": "/passed = 22"
+    },
+    {
+      "id": "transport-failed",
+      "status": "pass",
+      "required": true,
+      "summary": "/failed = 0"
+    },
+    {
+      "id": "live-passed",
+      "status": "pass",
+      "required": true,
+      "summary": "/passed = 15"
+    },
+    {
+      "id": "live-failed",
+      "status": "pass",
+      "required": true,
+      "summary": "/failed = 0"
+    },
+    {
+      "id": "catalog-repair",
+      "status": "pass",
+      "required": true,
+      "summary": "/checks/authoritative_item_catalog = True"
+    },
+    {
+      "id": "bepinex-build",
+      "status": "pass",
+      "required": true,
+      "summary": "artifacts/BepInEx/BaldiTogether.BepInEx.dll exists"
+    },
+    {
+      "id": "melon-build",
+      "status": "pass",
+      "required": true,
+      "summary": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll exists"
+    }
+  ]
+}

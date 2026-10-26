@@ -1,0 +1,15 @@
+# Native multiplayer results — 0.5.2
+
+The host publishes one floor results snapshot when the original `ElevatorScreen.ShowResults` runs. This happens after `MainGameManager.LoadNextLevel` has awarded the original sticker and power bonuses. Clients open the original elevator screen and run its original results sequence; the mod does not recreate the monitor, text animation, or sounds.
+
+The snapshot contains the completed floor generation, earned YTPs, final team wallet, power multiplier, sticker bonus, and elapsed time. The original display computes total as earned YTPs × power multiplier + sticker bonus and formats time as minutes:seconds. Client wallet and earned-point fields receive authoritative totals directly, without calling the reward method again. Duplicate snapshots and snapshots for an older or future floor are ignored. Single-player behavior is unchanged.
+
+Clients cannot activate the results elevator buttons. The host's subsequent normal level load advances everyone, preserving the existing native elevator transition. The same results screen stays alive while the new map loads behind it, as on the host. A scoped wrapper supplies completed-floor points only during the native results iterator's steps, so a new floor's point reset cannot change the displayed total. This synchronizes result values and the native sequence, not individual animation frames or attempts to skip the animation.
+
+## Focused verification
+
+An isolated `-bt-lab -bt-diagnostics -bt-host -bt-auto-start -bt-results-tour` launch writes `artifacts/tests/results-sync-results.json`. Its 11 checks cover current generation acceptance, exact native points/wallet/multiplier fields, duplicate/stale/future rejection, unchanged totals on duplicate delivery, packet round-trip, and the original results iterator's final displayed values (123 YTPs, 2X, 17 sticker bonus, 263 total, 1:23). The display test deliberately resets actual earned points to zero and checks that the wrapper preserves that new-floor value. It restores the test wallet and earned-point totals after the check.
+
+Original code inspected: `MainGameManager.LoadNextLevel`, `ElevatorScreen.Initialize/ShowResults/Results/LoadDelay`, and `CoreGameManager.GetPoints/GetPointsThisLevel/AddPoints`. Private decompiled game code is not included in distribution.
+
+For real host-to-client delivery, launch two isolated lab processes with `-bt-results-live`, one hosting with `-bt-auto-start` and the other joining its port. The host waits for both worlds to be ready, sets an isolated 100-point floor result with one attempt, and calls the original `MainGameManager.LoadNextLevel`. Each process writes `results-live-{pid}.json`: four host checks cover native rewards and advancement; five client checks cover received values, the original results monitor, wallet, retained screen across the floor load, and preservation of next-floor earned points. The last check deliberately resets the client's earned-point field after the floor advances, solely inside the explicit lab launch. These reports are runtime evidence only after they have actually been run.

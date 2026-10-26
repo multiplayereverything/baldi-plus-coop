@@ -1,0 +1,33 @@
+{
+  "run_id": "vr_6d59441065de",
+  "verdict": "pass",
+  "assurance": "isolated_local",
+  "limitations": [],
+  "signature_status": "unsigned_hash_bound",
+  "checks": [
+    {
+      "id": "transport-passed",
+      "status": "pass",
+      "required": true,
+      "summary": "/passed = 14"
+    },
+    {
+      "id": "transport-failed",
+      "status": "pass",
+      "required": true,
+      "summary": "/failed = 0"
+    },
+    {
+      "id": "bepinex-build",
+      "status": "pass",
+      "required": true,
+      "summary": "artifacts/BepInEx/BaldiTogether.BepInEx.dll exists"
+    },
+    {
+      "id": "melon-build",
+      "status": "pass",
+      "required": true,
+      "summary": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll exists"
+    }
+  ]
+}

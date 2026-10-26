@@ -1,0 +1,14 @@
+{
+  "contract_id": "baldi-together-0.4.1-native-menu",
+  "title": "Baldi-style Multiplayer menu",
+  "created_by": "Codex",
+  "required_assurance": "isolated_local",
+  "checks": [
+    { "id": "ui-passed", "type": "json_value", "params": { "path": "artifacts/tests/native-ui-results.json", "pointer": "/passed", "equals": 11 } },
+    { "id": "ui-failed", "type": "json_value", "params": { "path": "artifacts/tests/native-ui-results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "menu-preview", "type": "file_exists", "params": { "path": "docs/multiplayer-menu-0.4.1.png" } },
+    { "id": "small-preview", "type": "file_exists", "params": { "path": "docs/multiplayer-small-0.4.1.png" } },
+    { "id": "bepinex-build", "type": "file_exists", "params": { "path": "artifacts/BepInEx/BaldiTogether.BepInEx.dll" } },
+    { "id": "melon-build", "type": "file_exists", "params": { "path": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll" } }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "contract_id": "baldi-together-0.4.12-locker-visibility",
+  "title": "Remote locker visibility",
+  "created_by": "Codex",
+  "required_assurance": "isolated_local",
+  "checks": [
+    { "id": "locker-passed", "type": "json_value", "params": { "path": "artifacts/tests/locker-results.json", "pointer": "/passed", "equals": 8 } },
+    { "id": "locker-failed", "type": "json_value", "params": { "path": "artifacts/tests/locker-results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "bepinex-build", "type": "file_exists", "params": { "path": "artifacts/BepInEx/BaldiTogether.BepInEx.dll" } },
+    { "id": "melon-build", "type": "file_exists", "params": { "path": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll" } }
+  ]
+}

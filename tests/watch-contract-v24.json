@@ -1,0 +1,12 @@
+{
+  "contract_id": "baldi-together-0.5.1-capture",
+  "title": "Baldi continues chasing after individual capture",
+  "created_by": "Codex",
+  "required_assurance": "isolated_local",
+  "checks": [
+    { "id": "capture-passed", "type": "json_value", "params": { "path": "artifacts/tests/spectator-results.json", "pointer": "/passed", "equals": 16 } },
+    { "id": "capture-failed", "type": "json_value", "params": { "path": "artifacts/tests/spectator-results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "bepinex-build", "type": "file_exists", "params": { "path": "artifacts/BepInEx/BaldiTogether.BepInEx.dll" } },
+    { "id": "melon-build", "type": "file_exists", "params": { "path": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll" } }
+  ]
+}

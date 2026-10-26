@@ -1,0 +1,14 @@
+{
+  "contract_id": "baldi-together-0.4.9-title-transition",
+  "title": "Title artwork in native dissolve",
+  "created_by": "Codex",
+  "required_assurance": "isolated_local",
+  "checks": [
+    { "id": "title-passed", "type": "json_value", "params": { "path": "artifacts/tests/title-art-transition-results.json", "pointer": "/passed", "equals": 5 } },
+    { "id": "title-failed", "type": "json_value", "params": { "path": "artifacts/tests/title-art-transition-results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "button-passed", "type": "json_value", "params": { "path": "artifacts/tests/button-art-results.json", "pointer": "/passed", "equals": 4 } },
+    { "id": "button-failed", "type": "json_value", "params": { "path": "artifacts/tests/button-art-results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "bepinex-build", "type": "file_exists", "params": { "path": "artifacts/BepInEx/BaldiTogether.BepInEx.dll" } },
+    { "id": "melon-build", "type": "file_exists", "params": { "path": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll" } }
+  ]
+}

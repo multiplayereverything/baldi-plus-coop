@@ -1,0 +1,134 @@
+{
+    "checks":  [
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/vending-native-results.json",
+                                      "pointer":  "/passed",
+                                      "equals":  5
+                                  },
+                       "id":  "vending-native-results.json-passed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/vending-native-results.json",
+                                      "pointer":  "/failed",
+                                      "equals":  0
+                                  },
+                       "id":  "vending-native-results.json-failed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/results-live-client.json",
+                                      "pointer":  "/passed",
+                                      "equals":  5
+                                  },
+                       "id":  "results-live-client.json-passed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/results-live-client.json",
+                                      "pointer":  "/failed",
+                                      "equals":  0
+                                  },
+                       "id":  "results-live-client.json-failed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/results-live-host.json",
+                                      "pointer":  "/passed",
+                                      "equals":  4
+                                  },
+                       "id":  "results-live-host.json-passed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/results-live-host.json",
+                                      "pointer":  "/failed",
+                                      "equals":  0
+                                  },
+                       "id":  "results-live-host.json-failed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/vending-results.json",
+                                      "pointer":  "/passed",
+                                      "equals":  12
+                                  },
+                       "id":  "vending-results.json-passed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/vending-results.json",
+                                      "pointer":  "/failed",
+                                      "equals":  0
+                                  },
+                       "id":  "vending-results.json-failed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/console-results.json",
+                                      "pointer":  "/passed",
+                                      "equals":  7
+                                  },
+                       "id":  "console-results.json-passed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/console-results.json",
+                                      "pointer":  "/failed",
+                                      "equals":  0
+                                  },
+                       "id":  "console-results.json-failed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/countdown-locker-results.json",
+                                      "pointer":  "/passed",
+                                      "equals":  12
+                                  },
+                       "id":  "countdown-locker-results.json-passed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/countdown-locker-results.json",
+                                      "pointer":  "/failed",
+                                      "equals":  0
+                                  },
+                       "id":  "countdown-locker-results.json-failed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/results-sync-results.json",
+                                      "pointer":  "/passed",
+                                      "equals":  11
+                                  },
+                       "id":  "results-sync-results.json-passed",
+                       "type":  "json_value"
+                   },
+                   {
+                       "params":  {
+                                      "path":  "artifacts/tests/results-sync-results.json",
+                                      "pointer":  "/failed",
+                                      "equals":  0
+                                  },
+                       "id":  "results-sync-results.json-failed",
+                       "type":  "json_value"
+                   }
+               ],
+    "title":  "Vending results locker countdown and debug console",
+    "created_by":  "Codex",
+    "required_assurance":  "isolated_local",
+    "contract_id":  "baldi-together-0.5.2-sync"
+}

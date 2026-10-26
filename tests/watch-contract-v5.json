@@ -1,0 +1,20 @@
+{
+  "contract_id": "baldi-together-0.2.1-menu-ui",
+  "title": "0.2.1 builds, fresh game regression reports and inspected UI captures",
+  "created_by": "Codex",
+  "required_assurance": "isolated_local",
+  "checks": [
+    { "id": "transport-passed", "type": "json_value", "params": { "path": "artifacts/tests/results.json", "pointer": "/passed", "equals": 22 } },
+    { "id": "transport-failed", "type": "json_value", "params": { "path": "artifacts/tests/results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "live-passed", "type": "json_value", "params": { "path": "artifacts/tests/live-results.json", "pointer": "/passed", "equals": 15 } },
+    { "id": "live-failed", "type": "json_value", "params": { "path": "artifacts/tests/live-results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "bepinex-build", "type": "file_exists", "params": { "path": "artifacts/BepInEx/BaldiTogether.BepInEx.dll" } },
+    { "id": "melon-build", "type": "file_exists", "params": { "path": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll" } },
+    { "id": "menu-capture", "type": "file_exists", "params": { "path": "docs/menu-0.2.1.png" } },
+    { "id": "host-capture", "type": "file_exists", "params": { "path": "docs/lobby-0.2.1.png" } },
+    { "id": "join-capture", "type": "file_exists", "params": { "path": "docs/join-0.2.1.png" } },
+    { "id": "error-capture", "type": "file_exists", "params": { "path": "docs/error-0.2.1.png" } },
+    { "id": "room-capture", "type": "file_exists", "params": { "path": "docs/room-0.2.1.png" } },
+    { "id": "small-capture", "type": "file_exists", "params": { "path": "docs/lobby-small-0.2.1.png" } }
+  ]
+}

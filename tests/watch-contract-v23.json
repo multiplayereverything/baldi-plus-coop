@@ -1,0 +1,16 @@
+{
+  "contract_id": "baldi-together-0.5.0-multiplayer-expansion",
+  "title": "Spectating, migration, NPC expansion and compatibility",
+  "created_by": "Codex",
+  "required_assurance": "isolated_local",
+  "checks": [
+    { "id": "focused-passed", "type": "json_value", "params": { "path": "artifacts/tests/release-0.5.0-results.json", "pointer": "/passed", "equals": 117 } },
+    { "id": "focused-failed", "type": "json_value", "params": { "path": "artifacts/tests/release-0.5.0-results.json", "pointer": "/failed", "equals": 0 } },
+    { "id": "spectator", "type": "json_value", "params": { "path": "artifacts/tests/spectator-results.json", "pointer": "/passed", "equals": 12 } },
+    { "id": "npc-expansion", "type": "json_value", "params": { "path": "artifacts/tests/npc-expansion-results.json", "pointer": "/passed", "equals": 14 } },
+    { "id": "active-floor-graceful", "type": "json_value", "params": { "path": "artifacts/tests/migration-floor-graceful-results.json", "pointer": "/passed", "equals": 12 } },
+    { "id": "active-floor-abrupt", "type": "json_value", "params": { "path": "artifacts/tests/migration-floor-abrupt-results.json", "pointer": "/passed", "equals": 12 } },
+    { "id": "bepinex-build", "type": "file_exists", "params": { "path": "artifacts/BepInEx/BaldiTogether.BepInEx.dll" } },
+    { "id": "melon-build", "type": "file_exists", "params": { "path": "artifacts/MelonLoader/BaldiTogether.MelonLoader.dll" } }
+  ]
+}
