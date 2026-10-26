@@ -24,6 +24,7 @@ for ($attempt = 0; $attempt -le $Retries; $attempt++) {
         if ($running -and $running.ProcessName -eq 'BALDI') { Stop-Process -Id $process.Id; Start-Sleep -Seconds 2 }
     }
     if (Test-Path -LiteralPath $resultPath) { break }
+    & (Join-Path $PSScriptRoot 'save-failure.ps1') -Name "$Tour-attempt$($attempt + 1)" -Tour $Tour | Write-Output
     Write-Output "$Tour (PID $($process.Id)): no $Result within $TimeoutSeconds s (exited: $($process.HasExited)); attempt $($attempt + 1) of $($Retries + 1)."
 }
 if (!(Test-Path -LiteralPath $resultPath)) { throw "No $Result after $($Retries + 1) attempts." }

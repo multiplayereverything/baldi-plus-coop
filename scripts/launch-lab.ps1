@@ -1,4 +1,5 @@
-param([switch]$TestActions, [switch]$SpriteTour, [switch]$FocusedSync, [switch]$FlowSync, [switch]$NpcSync, [switch]$LobbyTour, [switch]$LanTour, [switch]$Encounter, [switch]$Soak, [switch]$Profile, [switch]$Visible, [string]$Seed, [string]$Chaos, [int]$StallHost, [switch]$NoKeepAlive)
+param([switch]$TestActions, [switch]$SpriteTour, [switch]$FocusedSync, [switch]$FlowSync, [switch]$NpcSync, [switch]$LobbyTour, [switch]$LanTour, [switch]$Encounter, [switch]$Soak, [switch]$Profile, [switch]$Visible, [string]$Seed, [string]$Chaos, [int]$StallHost, [switch]$NoKeepAlive, [switch]$LateShopAck, [switch]$NoLateAck, [switch]$NoOwnGlue, [switch]$NoBuild)
+# -NoBuild installs the DLLs already in artifacts/ (for example an older release, for an A/B run) instead of rebuilding.
 # -Visible shows both windows (needed for focus and Alt+Tab tests; focus cannot move to a hidden window).
 $windowStyle = if ($Visible) { 'Normal' } else { 'Hidden' }
 $ErrorActionPreference = 'Stop'
@@ -14,7 +15,7 @@ foreach ($name in @('host','client')) {
         if ($running -and $running.ProcessName -eq 'BALDI') { Stop-Process -Id $taskProcessId }
     }
 }
-& (Join-Path $PSScriptRoot 'build.ps1')
+if (!$NoBuild) { & (Join-Path $PSScriptRoot 'build.ps1') }
 Copy-Item -LiteralPath (Join-Path $modRoot 'artifacts/BepInEx/BaldiTogether.BepInEx.dll') -Destination (Join-Path $gameRoot 'BepInEx/plugins/BaldiTogether/BaldiTogether.BepInEx.dll') -Force
 Copy-Item -LiteralPath (Join-Path $modRoot 'artifacts/MelonLoader/BaldiTogether.MelonLoader.dll') -Destination (Join-Path $labRoot 'Mods/BaldiTogether.MelonLoader.dll') -Force
 $hostLog = Join-Path $modRoot 'private/host-player.log'
@@ -87,6 +88,10 @@ if ($Chaos) {
 if (($clientArgs -notcontains '-bt-port') -and ($clientArgs -contains '-bt-join')) { $clientArgs += @('-bt-port','27015') }
 if (!$LobbyTour) { $hostArgs += @('-bt-port','27015') }
 if ($StallHost -gt 0) { $hostArgs += @('-bt-lab-stall-host', "$StallHost") } # the host's game loop blocks once, mid-floor
+# -LateShopAck: the client holds each shop ack 15 s, past the host's 12 s deadline; -NoLateAck: host mutant that ignores late acks.
+if ($LateShopAck) { $clientArgs += @('-bt-lab-delay-shop-ack','15') }
+if ($NoLateAck) { $hostArgs += '-bt-lab-no-late-ack' }
+if ($NoOwnGlue) { $hostArgs += '-bt-lab-no-own-glue'; $clientArgs += '-bt-lab-no-own-glue' } # mutant: host-priced glue stick for everyone
 if ($NoKeepAlive) { $hostArgs += '-bt-lab-no-keepalive'; $clientArgs += '-bt-lab-no-keepalive' } # mutation run: 0.8.x link liveness
 if ($Seed) { $hostArgs += @('-bt-seed', $Seed) } # the host's run seed (lab); clients always take the host's
 $hostProcess = Start-Process -FilePath (Join-Path $gameRoot 'BALDI.exe') -ArgumentList $hostArgs -WindowStyle $windowStyle -PassThru

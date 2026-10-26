@@ -13,7 +13,7 @@ root = Path(__file__).resolve().parents[2]
 game_hash = hashlib.sha256((root / "BALDI_Data/Managed/Assembly-CSharp.dll").read_bytes()).hexdigest()
 
 def hello(code):
-    return b"\x01" + struct.pack("<i", 14) + text("0.9.0") + text(game_hash) + text("Probe") + text(code)
+    return b"\x01" + struct.pack("<i", 14) + text("0.9.1") + text(game_hash) + text("Probe") + text(code)
 
 cases = {
     "message before handshake": b"\x07" + struct.pack("<ii4f", 1, 3, 0, 0, 0, 0),

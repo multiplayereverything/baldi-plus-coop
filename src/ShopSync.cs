@@ -13,9 +13,13 @@ namespace BaldiTogether
         sealed class ShopSlot
         {
             public Pickup Pickup; public StoreRoomFunction Store; public PriceTag Tag;
-            public ItemObject Item; public int Price; public bool Sold, Pending, IsMap;
+            public ItemObject Item; public int Price; public bool Sold, Pending, IsMap, IsGlue;
         }
         sealed class ShopDelivery { public int Buyer, Price, Token; public string Key; public float Deadline; }
+        // Deliveries past their deadline, kept so a late ack still settles them: a failure refunds, a success books the sale.
+        readonly Dictionary<int, ShopDelivery> shopExpired = new Dictionary<int, ShopDelivery>();
+        float shopAckSentAt = -1; // lab: when this client last sent a shop ack (the focused test waits for the host's answer to it)
+        int shopLateRefunds, shopLateSales, glueTestShown = -1, glueTestCharged = -1, glueHostShelfPrice = -1, glueOwnedAtShow = -1;
         readonly Dictionary<string, ShopSlot> shopStock = new Dictionary<string, ShopSlot>();
         readonly Dictionary<string, StoreRoomFunction> shopStores = new Dictionary<string, StoreRoomFunction>();
         readonly Dictionary<int, ShopDelivery> shopDeliveries = new Dictionary<int, ShopDelivery>();
@@ -33,7 +37,7 @@ namespace BaldiTogether
         void ResetShop()
         {
             // Disconnect cannot safely infer delivery, so only explicit failed acknowledgements refund.
-            shopStock.Clear(); shopStores.Clear(); shopDeliveries.Clear(); shopReceipts.Clear();
+            shopStock.Clear(); shopStores.Clear(); shopDeliveries.Clear(); shopExpired.Clear(); shopReceipts.Clear();
             shopMapsApplied.Clear(); shopRequestTimes.Clear(); shopPending = false; shopAssets = null;
             shopReplicaFrames = 0; shopLastWallet = -1;
         }
@@ -49,24 +53,34 @@ namespace BaldiTogether
                 shopStores[Key(store)] = store;
                 var ordinary = ShopField<List<Pickup>>(store, "pickups");
                 var tags = ShopField<PriceTag[]>(store, "tag");
-                for (int i = 0; i < ordinary.Count; i++) AddShopSlot(store, ordinary[i], i < tags.Length ? tags[i] : null, false);
+                for (int i = 0; i < ordinary.Count; i++) AddShopSlot(store, ordinary[i], i < tags.Length ? tags[i] : null, false, false);
                 var stickers = ShopField<Pickup[]>(store, "stickerPickup");
                 var stickerTags = ShopField<PriceTag[]>(store, "stickerTag");
-                for (int i = 0; i < stickers.Length; i++) AddShopSlot(store, stickers[i], i < stickerTags.Length ? stickerTags[i] : null, false);
-                AddShopSlot(store, ShopField<Pickup>(store, "mapPickup"), ShopField<PriceTag>(store, "mapTag"), true);
-                AddShopSlot(store, ShopField<Pickup>(store, "glueStickPickup"), ShopField<PriceTag>(store, "glueStickTag"), false);
+                for (int i = 0; i < stickers.Length; i++) AddShopSlot(store, stickers[i], i < stickerTags.Length ? stickerTags[i] : null, false, false);
+                AddShopSlot(store, ShopField<Pickup>(store, "mapPickup"), ShopField<PriceTag>(store, "mapTag"), true, false);
+                AddShopSlot(store, ShopField<Pickup>(store, "glueStickPickup"), ShopField<PriceTag>(store, "glueStickTag"), false, true);
             }
             if (shopStock.Count > 64) throw new IOException("Shop stock limit exceeded.");
         }
 
-        void AddShopSlot(StoreRoomFunction store, Pickup pickup, PriceTag tag, bool map)
+        void AddShopSlot(StoreRoomFunction store, Pickup pickup, PriceTag tag, bool map, bool glue)
         {
             if (pickup == null) return;
             string key = Key(pickup);
             if (shopStock.ContainsKey(key)) throw new IOException("Duplicate shop stock ID.");
             shopStock[key] = new ShopSlot { Pickup = pickup, Store = store, Tag = tag, Item = pickup.item,
-                Price = pickup.price, Sold = !pickup.gameObject.activeSelf || pickup.item == null || pickup.item.itemType == Items.None, IsMap = map };
+                Price = pickup.price, Sold = !pickup.gameObject.activeSelf || pickup.item == null || pickup.item.itemType == Items.None, IsMap = map, IsGlue = glue };
         }
+
+        // Glue sticks are a personal sticker upgrade: the game prices one at 1000 + 500 per glue stick the player owns and
+        // stops selling at 4 (StoreRoomFunction). The shared shelf used the host's count for everyone; each player now
+        // sees and pays their own price, and the host accepts any price that matches a possible count.
+        public const int GlueStickLimit = 4;
+        public static int GluePriceFor(int owned) { return 1000 + 500 * owned; }
+        public static bool GlueQuoteValid(int price) { return price >= GluePriceFor(0) && price <= GluePriceFor(GlueStickLimit - 1) && (price - 1000) % 500 == 0; }
+        // lab mutant (-bt-lab-no-own-glue): one host-priced glue stick for everyone, the 0.9.0 behaviour
+        static bool LabNoOwnGlue { get { return Lab.Enabled && Lab.HasArg("-bt-lab-no-own-glue"); } }
+        static int OwnGlueSticks() { var stickers = Singleton<StickerManager>.Instance; return stickers == null ? 0 : stickers.TotalGlueSticks; }
 
         public bool BeforeShopClicked(Pickup pickup)
         {
@@ -109,7 +123,8 @@ namespace BaldiTogether
             else Network.Send(buyer, Wire.Packet(Op.ShopGrant, w => { w.Write(epoch); w.Write(0); Wire.Text(w, message); }));
         }
 
-        void PurchaseShop(int buyer, Peer peer, string key)
+        // remotePrice: the buyer's own glue-stick price (validated by GlueQuoteValid); -1 for every other item.
+        void PurchaseShop(int buyer, Peer peer, string key, int remotePrice = -1)
         {
             ShopSlot slot;
             if (!shopStock.TryGetValue(key, out slot) || slot.Pickup == null || slot.Sold || slot.Pending || !slot.Pickup.gameObject.activeInHierarchy
@@ -118,7 +133,8 @@ namespace BaldiTogether
             if (buyer != 0 && (peer == null || !peer.Ready || !peer.HasPose || peer.Eliminated || Vector3.Distance(peer.Position, slot.Pickup.transform.position) > 20))
             { ShopDenied(buyer, "Move closer to the shop item before buying it."); return; }
             var core = Singleton<CoreGameManager>.Instance;
-            int price = slot.Pickup.free ? 0 : Math.Max(0, slot.Pickup.price);
+            int price = slot.Pickup.free ? 0 : buyer != 0 && slot.IsGlue && remotePrice >= 0 && !LabNoOwnGlue ? remotePrice : Math.Max(0, slot.Pickup.price);
+            if (buyer != 0 && slot.IsGlue) { glueTestCharged = price; glueHostShelfPrice = slot.Pickup.price; }
             if (core.GetPoints(0) < price) { ShopDenied(buyer, "The team needs " + price + " YTPs for that item."); return; }
             slot.Item = slot.Pickup.item; slot.Price = slot.Pickup.price;
             if (buyer == 0)
@@ -161,7 +177,7 @@ namespace BaldiTogether
             if (!worldReady || !shopStock.TryGetValue(key, out slot))
             {
                 Log("Shop grant " + key + " could not be placed; asking the host for a refund.");
-                Network.Send(0, Wire.Packet(Op.ShopAck, w => { w.Write(epoch); w.Write(token); w.Write(false); }));
+                SendShopAck(token, false);
                 return;
             }
             ItemObject item = FindShopAsset(itemName);
@@ -178,7 +194,32 @@ namespace BaldiTogether
                 finally { Applying = previous; }
             }
             if (!delivered) { focusedShopRefundReceived = true; Notify("Inventory filled before the purchase arrived. The team will be refunded."); }
-            Network.Send(0, Wire.Packet(Op.ShopAck, w => { w.Write(epoch); w.Write(token); w.Write(delivered); }));
+            SendShopAck(token, delivered);
+        }
+
+        // Lab (-bt-lab-delay-shop-ack N): hold the buyer's ack for N s, past the host's 12 s deadline, to prove late acks settle.
+        void SendShopAck(int token, bool delivered)
+        {
+            int generation = epoch;
+            byte[] ack = Wire.Packet(Op.ShopAck, w => { w.Write(generation); w.Write(token); w.Write(delivered); });
+            float delay = LabArgSeconds("-bt-lab-delay-shop-ack");
+            if (delay <= 0) { Network.Send(0, ack); shopAckSentAt = Time.realtimeSinceStartup; return; }
+            Log("LAB: holding shop ack " + token + " (" + (delivered ? "delivered" : "failed") + ") for " + delay + " s");
+            StartCoroutine(SendShopAckLater(ack, delay));
+        }
+
+        System.Collections.IEnumerator SendShopAckLater(byte[] ack, float delay)
+        {
+            yield return new WaitForSecondsRealtime(delay);
+            if (Network != null && !Hosting) { Network.Send(0, ack); shopAckSentAt = Time.realtimeSinceStartup; }
+        }
+
+        static float LabArgSeconds(string flag)
+        {
+            if (!Lab.Enabled) return 0;
+            string[] args = Environment.GetCommandLineArgs(); float value;
+            for (int i = 0; i + 1 < args.Length; i++) if (args[i] == flag && float.TryParse(args[i + 1], out value)) return Mathf.Clamp(value, 0, 60);
+            return 0;
         }
 
         ItemObject FindShopAsset(string name)
@@ -203,10 +244,12 @@ namespace BaldiTogether
                 if (kind == 0)
                 {
                     ShopSlot quotedSlot;
-                    if (shopStock.TryGetValue(key, out quotedSlot) && !quotedSlot.Sold && !quotedSlot.Pending && quotedSlot.Pickup != null
-                        && (quotedSlot.Pickup.item == null || quotedSlot.Pickup.item.name != quotedItem || (quotedSlot.Pickup.free ? 0 : quotedSlot.Pickup.price) != quotedPrice))
+                    bool glue = shopStock.TryGetValue(key, out quotedSlot) && quotedSlot.IsGlue;
+                    if (quotedSlot != null && !quotedSlot.Sold && !quotedSlot.Pending && quotedSlot.Pickup != null
+                        && (quotedSlot.Pickup.item == null || quotedSlot.Pickup.item.name != quotedItem
+                            || (glue && !quotedSlot.Pickup.free ? !GlueQuoteValid(quotedPrice) : (quotedSlot.Pickup.free ? 0 : quotedSlot.Pickup.price) != quotedPrice)))
                     { ShopDenied(id, "Johnny's stock or price changed. Check the updated shelf and try again."); return true; }
-                    PurchaseShop(id, peer, key);
+                    PurchaseShop(id, peer, key, glue ? quotedPrice : -1);
                 }
                 else
                 {
@@ -220,6 +263,7 @@ namespace BaldiTogether
             if (op == Op.ShopAck)
             {
                 int generation = r.ReadInt32(), token = r.ReadInt32(); bool delivered = r.ReadBoolean(); ShopDelivery delivery;
+                if (generation == epoch && shopExpired.TryGetValue(token, out delivery) && delivery.Buyer == id) { SettleLateShopAck(token, delivery, delivered); return true; }
                 if (generation != epoch || !shopDeliveries.TryGetValue(token, out delivery) || delivery.Buyer != id) return true;
                 shopDeliveries.Remove(token); ShopSlot slot = shopStock[delivery.Key]; slot.Pending = false;
                 if (!delivered)
@@ -237,6 +281,29 @@ namespace BaldiTogether
                 return true;
             }
             return false;
+        }
+
+        // The buyer's ack arrived after the deadline, which closed the slot as sold. Settle it now.
+        void SettleLateShopAck(int token, ShopDelivery delivery, bool delivered)
+        {
+            shopExpired.Remove(token);
+            ShopSlot slot = shopStock[delivery.Key];
+            if (!delivered)
+            {
+                Singleton<CoreGameManager>.Instance.AddPoints(delivery.Price, 0, true, false, false); shopRefunds++; shopLateRefunds++;
+                // put the item back only if the shelf still shows the deadline's sold state (not restocked meanwhile)
+                if (slot.Sold && !slot.Pending && slot.Item != null && slot.Pickup.item == Singleton<CoreGameManager>.Instance.NoneItem)
+                { slot.Pickup.AssignItem(slot.Item); slot.Pickup.price = slot.Price; slot.Pickup.Hide(false); slot.Sold = false; }
+                Log("Shop: late failure ack for " + delivery.Key + "; refunded " + delivery.Price + ".");
+            }
+            else
+            {
+                // the same bookkeeping as an on-time ack (ItemCollected marks it sold and applies a bought map)
+                AccessTools.Method(typeof(StoreRoomFunction), "ItemPurchased").Invoke(slot.Store, new object[] { slot.Pickup, 0 });
+                AccessTools.Method(typeof(StoreRoomFunction), "ItemCollected").Invoke(slot.Store, new object[] { slot.Pickup, 0 });
+                shopPurchases++; shopLateSales++;
+                Log("Shop: late delivery ack for " + delivery.Key + ".");
+            }
         }
 
         bool HandleShopHost(Op op, BinaryReader r)
@@ -279,11 +346,13 @@ namespace BaldiTogether
             if (shopPending && Time.realtimeSinceStartup > shopPendingUntil) { shopPending = false; Notify("Shop request finished or timed out. Check the shelf before retrying."); }
             if (!Hosting || !worldReady) return;
             foreach (ShopSlot slot in shopStock.Values) RefreshShopSlot(slot);
+            foreach (var pair in shopExpired.Where(p => Time.realtimeSinceStartup > p.Value.Deadline || !peers.ContainsKey(p.Value.Buyer)).ToArray()) shopExpired.Remove(pair.Key);
             foreach (var pair in shopDeliveries.Where(p => Time.realtimeSinceStartup > p.Value.Deadline || !peers.ContainsKey(p.Value.Buyer)).ToArray())
             {
                 // Delivery can have succeeded before a lost ACK/disconnect. Never refund an uncertain delivery.
                 ShopSlot slot = shopStock[pair.Value.Key]; slot.Pending = false; slot.Sold = true;
                 slot.Pickup.AssignItem(Singleton<CoreGameManager>.Instance.NoneItem); slot.Pickup.Hide(true); shopDeliveries.Remove(pair.Key);
+                if (peers.ContainsKey(pair.Value.Buyer) && !(Lab.Enabled && Lab.HasArg("-bt-lab-no-late-ack"))) { pair.Value.Deadline = Time.realtimeSinceStartup + 120; shopExpired[pair.Key] = pair.Value; }
             }
         }
 
@@ -326,8 +395,23 @@ namespace BaldiTogether
                     else if (slot.Item != null && price < slot.Item.price && !free) slot.Tag.SetSale(slot.Item.price, price);
                     else slot.Tag.SetText(price.ToString());
                 }
+                if (slot.IsGlue && !sold && !free && !LabNoOwnGlue) ApplyOwnGluePrice(slot);
                 if (mapPurchased && slot.IsMap && shopMapsApplied.Add(key)) slot.Store.BuyMap();
             }
+        }
+
+        // Client: show the shared glue-stick shelf at this player's own price, or sold out once they own the limit.
+        void ApplyOwnGluePrice(ShopSlot slot)
+        {
+            int owned = OwnGlueSticks();
+            if (owned >= GlueStickLimit)
+            {
+                slot.Sold = true; slot.Pickup.price = 0; slot.Pickup.showDescription = false; slot.Pickup.Hide(true);
+                if (slot.Tag != null) slot.Tag.SetText(Singleton<LocalizationManager>.Instance.GetLocalizedText("TAG_Sold"));
+                return;
+            }
+            slot.Price = GluePriceFor(owned); slot.Pickup.price = slot.Price;
+            if (slot.Tag != null) slot.Tag.SetText(slot.Price.ToString());
         }
 
         public bool ShopPointsAllowed() { return !Active || Hosting || Applying || !Running; }
@@ -370,7 +454,8 @@ namespace BaldiTogether
                 for (int i = 0; i <= inventory.maxItem; i++) inventory.items[i] = shopStock[focusedShopKey].Item;
                 inventory.UpdateItems(); SendFocusedShopRequest(); focusedShopStep = 3;
             }
-            else if (focusedShopStep == 3 && focusedShopRefundReceived && shopLastWallet == 10000 && !shopStock[focusedShopKey].Pending)
+            // the snapshot can still show the pre-reservation wallet right after the failed delivery: wait for the ack to go out and settle
+            else if (focusedShopStep == 3 && focusedShopRefundReceived && shopAckSentAt > 0 && Time.realtimeSinceStartup > shopAckSentAt + 1 && shopLastWallet == 10000 && !shopStock[focusedShopKey].Pending)
             {
                 inventory.ClearItems(); focusedShopNext = Time.realtimeSinceStartup + .75f; focusedShopStep = 4;
             }
@@ -379,8 +464,27 @@ namespace BaldiTogether
             {
                 SendFocusedShopRequest(); focusedShopStep = 6;
                 Log("FOCUSED SHOP: purchase delivered; duplicate shelf request submitted.");
+                focusedShopNext = Time.realtimeSinceStartup + 1.5f;
             }
-            return focusedShopStep == 6;
+            else if (focusedShopStep == 6)
+            {
+                // Glue stick at this player's own price: the lab profile gets 2 glue stickers, so 2000 here while
+                // the host (none) still sees 1000 on the same shelf.
+                var glue = shopStock.FirstOrDefault(p => p.Value.IsGlue && !p.Value.Sold && !p.Value.Pending);
+                if (glue.Value == null) { focusedShopStep = 9; Log("FOCUSED SHOP: no glue stick on this shelf."); return true; }
+                core.GetPlayer(0).plm.Entity.Teleport(glue.Value.Pickup.transform.position + Vector3.back * 4); // within the host's 20-unit purchase range
+                if (OwnGlueSticks() < 2) { Singleton<StickerManager>.Instance.AddStickerToInventory(Sticker.GlueStick, false); Singleton<StickerManager>.Instance.AddStickerToInventory(Sticker.GlueStick, false); }
+                focusedShopNext = Time.realtimeSinceStartup + 1; focusedShopStep = 7; // wait for a snapshot to show the own price
+            }
+            else if (focusedShopStep == 7)
+            {
+                var glue = shopStock.First(p => p.Value.IsGlue);
+                glueTestShown = glue.Value.Pickup.price; glueOwnedAtShow = OwnGlueSticks();
+                focusedShopKey = glue.Key; focusedShopCost = glue.Value.Price;
+                Log("FOCUSED SHOP: glue stick shown at " + glueTestShown + " with " + OwnGlueSticks() + " glue sticks owned; buying.");
+                SendFocusedShopRequest(); focusedShopStep = 8;
+            }
+            return focusedShopStep >= 6;
         }
 
         void SendFocusedShopRequest()
@@ -396,6 +500,6 @@ namespace BaldiTogether
         string ShopDiagnostic()
         { return ",\"shopStock\":" + shopStock.Count + ",\"shopPurchases\":" + shopPurchases + ",\"shopRefunds\":" + shopRefunds + ",\"shopRejected\":" + shopRejected + ",\"shopReserved\":" + shopDeliveries.Count
             + ",\"shopReplicaFrames\":" + shopReplicaFrames + ",\"shopWallet\":" + (Singleton<CoreGameManager>.Instance == null ? -1 : Singleton<CoreGameManager>.Instance.GetPoints(0))
-            + ",\"shopTestStep\":" + focusedShopStep + ",\"shopTestCost\":" + focusedShopCost + ",\"shopLastCharge\":" + shopLastCharge; }
+            + ",\"glueShown\":" + glueTestShown + ",\"glueCharged\":" + glueTestCharged + ",\"glueHostShelf\":" + glueHostShelfPrice + ",\"glueOwned\":" + glueOwnedAtShow + ",\"shopLateRefunds\":" + shopLateRefunds + ",\"shopLateSales\":" + shopLateSales + ",\"shopTestStep\":" + focusedShopStep + ",\"shopTestCost\":" + focusedShopCost + ",\"shopLastCharge\":" + shopLastCharge; }
     }
 }

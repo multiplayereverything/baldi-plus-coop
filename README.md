@@ -1,6 +1,12 @@
 # Baldi's Basics Plus Multiplayer
 
-**Baldi Together 0.9.0:** experimental co-op for Baldi's Basics Plus **0.14.5**, over your LAN or online through Steam. Windows x64 / Unity 2020.3.49f1. BepInEx and MelonLoader builds share the same network implementation and can play together. Use **one loader per game copy**. Everyone must update to 0.9.0 (protocol 14). Older ZIPs are retained for rollback.
+**Baldi Together 0.9.1:** experimental co-op for Baldi's Basics Plus **0.14.5**, over your LAN or online through Steam. Windows x64 / Unity 2020.3.49f1. BepInEx and MelonLoader builds share the same network implementation and can play together. Use **one loader per game copy**. Everyone must update to 0.9.1 (protocol 14). Older ZIPs are retained for rollback.
+
+## New in 0.9.1
+
+- **Glue sticks cost what they cost you.** In the game, a glue stick costs 1000 YTPs plus 500 for each one you already own, and Johnny stops selling them once you have 4. In co-op everyone used to see the host's price. Each player now sees and pays their own.
+- **Late shop confirmations still count.** If a purchase's confirmation reached the host after its 12 s deadline (a slow connection, or a player's game hitching), the item was written off. If it couldn't be placed, the team lost its YTPs and the item. The host now waits up to 2 minutes for that answer: a failed delivery is refunded and the item goes back on the shelf, and a successful one completes the sale.
+- **Tests:** a two-player shop test on Johnny's real shelf, with confirmations held past the deadline and two mutant runs that must fail.
 
 ## New in 0.9.0
 

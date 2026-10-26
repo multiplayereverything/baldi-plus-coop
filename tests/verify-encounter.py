@@ -49,6 +49,8 @@ LOGS = {
 }
 # Unity exceptions, Guard ("UpdateX failed: ..."), rejected peers and a client dropping a malformed host packet.
 PROBLEM = re.compile(r"Exception|\bfailed: |Rejected peer|Host sent invalid")
+# Unity logs this when another window holds focus (the lab windows are hidden); it is not a mod error.
+BENIGN = re.compile(r"Failed to confine the cursor")
 
 
 # Results older than this launch (host-pid.txt is written by launch-lab.ps1) are stale and never count.
@@ -94,7 +96,7 @@ for side, paths in LOGS.items():
     lines = []
     for path in found:
         for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-            if PROBLEM.search(line):
+            if PROBLEM.search(line) and not BENIGN.search(line):
                 lines.append(f"{path.name}: {line.strip()[:300]}")
     problems[side] = lines
     checks[f"{side} logs: present"] = bool(found)

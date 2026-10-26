@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.1, 2026-10-26
+
+- Fix: glue sticks now have a price per player, as in the game: 1000 YTPs plus 500 for each glue stick that player already owns, sold out once they own 4. The shared shelf used to show the host's price and stock to everyone.
+- Fix: a shop purchase whose confirmation arrived after the host's 12 s deadline was never settled. If the item couldn't be placed, the team lost its YTPs and the item. Late confirmations are now honoured for 2 minutes: a failure refunds and puts the item back, and a success completes the sale.
+- Fix: when Mrs. Pomp caught a client right after she spawned, the appointment could reach the client before its copy of Pomp existed. The client dropped it silently: no appointment, no reward, and the host gave up after its timer. The client now holds the appointment for up to 5 s until Pomp appears.
+- Lab:
+  - two-process tests no longer stall when the client reaches the title before the host opens its room: auto-join now retries;
+  - failed lab attempts keep their logs and reports in `private/failures/`;
+  - new `scripts/shop-test.ps1` (plain, late acks, and two mutants), also run by the lab suite.
+- Protocol stays 14; everyone must update to 0.9.1.
+
 ## 0.9.0, 2026-10-26
 
 - Online play through Steam:

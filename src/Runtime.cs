@@ -29,7 +29,7 @@ namespace BaldiTogether
 
     public sealed partial class TogetherRuntime : MonoBehaviour
     {
-        public const string ModVersion = "0.9.0";
+        public const string ModVersion = "0.9.1";
         public static TogetherRuntime Instance;
         public static bool Applying;
         public static Action<string> Log = delegate { };
@@ -59,6 +59,7 @@ namespace BaldiTogether
         float nextCapture;
         float nextLabStep;
         bool warningAdvanced, nameSubmitted;
+        int labWarningLogs;
         bool testActions;
         int testStep;
         float nextTest;
@@ -68,6 +69,9 @@ namespace BaldiTogether
         string pendingNext;
         int pendingLives, pendingAttempts, pendingLastLevel, pendingMode, pendingLifeMode;
         string autoRole;
+        // Lab auto-join retries while the host is still starting: two lab copies start at once and the client often
+        // reached the title first, got "Connection refused" and sat idle until the test timed out.
+        float autoRoleAt; int labJoinRetries; bool labAutoJoin;
         CursorLockMode previousLock;
         bool previousVisible;
         GUIStyle textStyle, fieldStyle, buttonStyle, titleStyle;
@@ -253,8 +257,8 @@ namespace BaldiTogether
             UpdateSpriteDepthLab();
             if (!DebugConsoleOpen&&!DebugConsoleConsumedKeyFrame&&Input.GetKeyDown(KeyCode.F5)) SetPanel(!show);
             if (!DebugConsoleOpen&&!DebugConsoleConsumedKeyFrame&&show && Input.GetKeyDown(KeyCode.Escape)) NativeBack();
-            if (autoRole != null && Time.realtimeSinceStartup > 3 && (!Lab.Enabled||TitleVisible))
-            { string role = autoRole; autoRole = null; Connect(role == "host"); }
+            if (autoRole != null && Time.realtimeSinceStartup > 3 && Time.realtimeSinceStartup > autoRoleAt && (!Lab.Enabled||TitleVisible))
+            { string role = autoRole; autoRole = null; labAutoJoin = role == "join"; Connect(role == "host"); }
             UpdateSteam();
             float now = Time.realtimeSinceStartup;
             if (Lab.Enabled && now > nextLabStep) { nextLabStep = now + 3; AdvanceLabMenus(); }
@@ -317,7 +321,14 @@ namespace BaldiTogether
         {
             NoteLinkEvent(e);
             if(HandleMigrationConnectionEvent(e))return;
-            if (e.Kind == "error") { if (!Hosting) Disconnect("Connection failed: " + e.Message); else Tell(e.Message); return; }
+            if (e.Kind == "error")
+            {
+                if (Hosting) { Tell(e.Message); return; }
+                Disconnect("Connection failed: " + e.Message);
+                if (Lab.Enabled && labAutoJoin && labJoinRetries++ < 30)
+                { autoRole = "join"; autoRoleAt = Time.realtimeSinceStartup + 2; Log("LAB: the host isn't listening yet; join retry " + labJoinRetries + " in 2 s."); }
+                return;
+            }
             if (e.Kind == "connected")
             {
                 if (Hosting) peers[e.Peer] = new Peer { Id = e.Peer, Joined = Time.realtimeSinceStartup };
@@ -563,8 +574,17 @@ namespace BaldiTogether
         {
             WarningScreen warning = Object.FindObjectOfType<WarningScreen>();
             var global = Singleton<GlobalCam>.Instance;
-            if (warning != null && !warningAdvanced && global != null && global.Cam != null && global.Cam.targetTexture != null)
-            { warningAdvanced = true; HarmonyLib.AccessTools.Method(typeof(WarningScreen), "Advance").Invoke(warning, null); Log("LAB: advanced warning screen through game method."); }
+            bool cameraReady = global != null && global.Cam != null && global.Cam.targetTexture != null;
+            // Some two-process launches sat on the warning screen for minutes (black capture): log what is missing,
+            // and after 20 s advance anyway so the run is not lost to a startup stall.
+            if (warning != null && !warningAdvanced && (cameraReady || Time.realtimeSinceStartup > 20))
+            {
+                warningAdvanced = true; HarmonyLib.AccessTools.Method(typeof(WarningScreen), "Advance").Invoke(warning, null);
+                Log("LAB: advanced warning screen through game method" + (cameraReady ? "." : " (fallback at " + Time.realtimeSinceStartup.ToString("0") + " s; camera " + (global == null ? "no GlobalCam" : global.Cam == null ? "no Cam" : "no target texture") + ")."));
+            }
+            else if (!warningAdvanced && Time.realtimeSinceStartup > 10 && labWarningLogs++ < 6)
+                Log("LAB: waiting at startup: warning screen " + (warning != null ? "found" : "missing") + ", GlobalCam " + (global == null ? "missing" : global.Cam == null ? "no Cam" : global.Cam.targetTexture == null ? "no target texture" : "ready")
+                    + ", scene " + UnityEngine.SceneManagement.SceneManager.GetActiveScene().name + ", title " + TitleVisible + ", frame " + Time.frameCount);
             NameManager names = Object.FindObjectOfType<NameManager>();
             if (names != null && !nameSubmitted)
             {

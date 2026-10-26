@@ -695,11 +695,13 @@ namespace BaldiTogether
             catch (ArgumentException) { return null; }
         }
 
-        void EncClientBaseline()
+        // The client reads each step from a file every 0.1 s, so the host's Pomp assignment or Reflex start can land
+        // before the step changes here. Those counters keep the baseline from the step before.
+        void EncClientBaseline(string step)
         {
             encBase["gum"] = beansGumApplied; encBase["craftersSeq"] = craftersSendSeq;
-            encBase["pompAssigns"] = pompOwnerAssigns; encBase["pompPoints"] = pompOwnerPoints;
-            encBase["reflexStarts"] = reflexLocalStarts; encBase["reflexClicks"] = reflexLocalClicks; encBase["reflexPasses"] = reflexLocalPasses;
+            if (step != "pomp") { encBase["pompAssigns"] = pompOwnerAssigns; encBase["pompPoints"] = pompOwnerPoints; }
+            if (step != "reflex") { encBase["reflexStarts"] = reflexLocalStarts; encBase["reflexClicks"] = reflexLocalClicks; encBase["reflexPasses"] = reflexLocalPasses; }
             encBase["testSeq"] = testSeq; encBase["itemToken"] = clientItemToken;
         }
 
@@ -713,7 +715,7 @@ namespace BaldiTogether
                 encStarted = true; encRole = "client"; encEpoch = epoch; encStartedAt = now;
                 foreach (string name in EncClientChecks) encChecks[name] = false;
                 EncCheck("client-ready-acknowledged", true);
-                EncClientBaseline();
+                EncClientBaseline(null);
                 EncLog("client scenario started, epoch " + epoch);
             }
             if (epoch != encEpoch) { EncNote("the run moved to another floor"); EncFinish(); return; }
@@ -735,7 +737,7 @@ namespace BaldiTogether
             if (command.Step != encClientStep)
             {
                 encClientStep = command.Step; encStep = command.Step;
-                EncClientBaseline();
+                EncClientBaseline(command.Step);
                 encPompMoved = encItemDone = encItemConsumed = false; encReflexOpenAt = -1;
                 EncLog("step " + command.Step);
                 EncWriteResults(false);

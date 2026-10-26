@@ -46,7 +46,8 @@ for ($attempt = 1; $attempt -le 2 -and !$lanPassed; $attempt++) {
         if (Test-Path -LiteralPath $result) { Remove-Item -LiteralPath $result }
     }
     & (Join-Path $PSScriptRoot 'launch-lab.ps1') -LanTour | Select-Object -Last 1
-    try { & $python -I (Join-Path $modRoot 'tests/verify-lobby.py') lan | Where-Object { $_ -match '^FAIL|passed$' }; $lanPassed = $LASTEXITCODE -eq 0 }
+    try { & $python -I (Join-Path $modRoot 'tests/verify-lobby.py') lan | Where-Object { $_ -match '^FAIL|passed$' }; $lanPassed = $LASTEXITCODE -eq 0
+        if (!$lanPassed) { & (Join-Path $PSScriptRoot 'save-failure.ps1') -Name "lan-tour-attempt$attempt" } }
     finally { Stop-LabPair }
 }
 if (!$lanPassed) { $failed += 'lan-tour' }
@@ -67,6 +68,7 @@ foreach ($mode in @(@('NpcSync','verify-npcs.py','npc-sync'), @('TestActions','v
             if ($mode[0] -eq 'Encounter' -or $mode[0] -eq 'Soak') { & $python -I (Join-Path $modRoot "tests/$($mode[1])") 700 | Select-Object -Last 1 }
             else { & $python -I (Join-Path $modRoot "tests/$($mode[1])") | Select-Object -Last 1 }
             $modePassed = $LASTEXITCODE -eq 0
+            if (!$modePassed) { & (Join-Path $PSScriptRoot 'save-failure.ps1') -Name "$($mode[2])-attempt$attempt" }
         }
         finally { Stop-LabPair }
     }
@@ -81,6 +83,14 @@ if ($LASTEXITCODE -ne 0) { $failed += 'link-health' }
 Start-Sleep -Seconds 3
 & (Join-Path $PSScriptRoot 'link-test.ps1') -NetProfile bad_wifi -Mutant | Where-Object { $_ -match 'mutant|retrying' }
 if ($LASTEXITCODE -ne 0) { $failed += 'link-health-mutant' }
+
+# Johnny's shop over two processes: plain, acks held past the host's deadline, and the two mutants that must fail.
+foreach ($shop in @(@{}, @{ LateAck = $true }, @{ Mutant = 'late-ack' }, @{ Mutant = 'glue' })) {
+    Start-Sleep -Seconds 3
+    $label = if ($shop.LateAck) { 'shop-late-ack' } elseif ($shop.Mutant) { "shop-mutant-$($shop.Mutant)" } else { 'shop' }
+    & (Join-Path $PSScriptRoot 'shop-test.ps1') @shop | Select-Object -Last 1 | ForEach-Object { "${label}: $_" }
+    if ($LASTEXITCODE -ne 0) { $failed += $label }
+}
 
 if ($failed.Count) { Write-Output "FAILED: $($failed -join ', ')"; exit 1 }
 Write-Output 'Lab suite passed.'

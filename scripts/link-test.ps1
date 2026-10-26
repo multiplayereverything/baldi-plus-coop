@@ -13,6 +13,7 @@ for ($attempt = 1; $attempt -le 2; $attempt++) {
         $verifyArgs = @('-I', (Join-Path $modRoot 'tests/verify-link.py')); if ($Mutant) { $verifyArgs += '--expect-mutant' }
         & $python @verifyArgs
         $code = $LASTEXITCODE
+        if ($code -ne 0 -and !$Mutant) { & (Join-Path $PSScriptRoot 'save-failure.ps1') -Name "link-attempt$attempt" }
     }
     finally {
         foreach ($role in 'host','client','chaos') {

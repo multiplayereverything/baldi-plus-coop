@@ -1,5 +1,70 @@
 # Development journal
 
+## 2026-10-26: 0.9.1 glue sticks, late shop acks, lab startup race
+
+**Request:** relayed from the user ("tell each mod to continue its work on the game and its current progress"):
+- the 44/45 encounter result;
+- the two-process startup stall;
+- Alt+Tab;
+- then the handoff's next steps (glue-stick ownership, late shop-ack refunds);
+- a tagged GitHub pre-release per version.
+
+**Lab evidence first:**
+- The lab suite deleted each two-process report before the next test, and `run-tour` overwrote a stalled attempt's log with its retry.
+- `scripts/save-failure.ps1` now copies a failed attempt's reports, game logs, MelonLoader `Latest.log`, runtime diagnostics and last screenshot to `private/failures/<name>-<time>/`. The suite, `run-tour`, `link-test` and `shop-test` call it.
+
+**Startup stall: a join race, not a hang:**
+- Caught live: the MelonLoader client reached the title, connected at 19:03:56 and got "Connection refused". The host only opened its room at 19:04:05, and lab auto-join never retried, so the pair waited until the verifier timed out.
+- Fix (lab only; real players press JOIN): auto-join retries every 2 s, up to 30 times.
+- The warning-screen wait also logs which camera part is missing, and advances after 20 s. It is a separate condition seen in single-process tours.
+
+**Encounter 44/45:**
+- Not reproduced: 45/45 in four repeats plus one rerun.
+- The failing check from the suite run is unknown, because its report was deleted. A repeat would now be kept.
+
+**Late shop acks:**
+- Cause: at the 12 s deadline the host closed a remote purchase as sold and forgot it. A failure ack arriving later was ignored: the team lost the YTPs and the item.
+- Fix:
+  - expired deliveries are kept for 120 s while the buyer is connected;
+  - a late failure refunds and puts the item back, if the shelf still shows the deadline's sold state;
+  - a late success runs the same `ItemPurchased`/`ItemCollected` bookkeeping as an on-time ack.
+
+**Glue sticks:**
+- Native rule: `StoreRoomFunction` prices the glue stick at 1000 + 500 × `StickerManager.TotalGlueSticks` and hides it at 4. The shared shelf used the host's count.
+- Fix, with no wire change (the request already quotes a price):
+  - the client shows its own price, or sold out at 4, and quotes it;
+  - the host accepts any quote that matches a possible count (1000, 1500, 2000 or 2500) for the glue slot only, and charges that.
+- The count is the client's own sticker state: a modified client could quote 1000. That affects only its own upgrade price.
+
+**Evidence: `scripts/shop-test.ps1`** (focused sync, BepInEx host and MelonLoader client, real Johnny shelf):
+- plain 8/8;
+- `-LateAck` 9/9, with the client holding every ack 15 s: the host refunds the late failure, books two late sales and puts the item back;
+- `-Mutant late-ack` (host ignores late acks): caught;
+- `-Mutant glue` (host-priced glue for everyone): caught.
+- The client with 2 glue sticks saw 2000 and paid 2000; the host's shelf said 1000.
+- **Test-script race found:** right after a failed delivery, the client's last snapshot could still show the pre-reservation wallet, so it bought again while the item was reserved. The client step now waits for its ack to be sent plus 1 s.
+- **Verifier fixes:** exact purchase counts and the owned count after buying (the glue stick itself counts) became "at least" checks, or a count recorded when the price was shown.
+
+**Alt+Tab:** not tested. The only true test opens a visible game window and sends Alt+Tab keystrokes to the desktop, so it waits for the user's OK. The 0.9.0 keepalive already covers the likely failure path, a stalled host making clients migrate.
+
+**Encounter 44/45 found:** the full suite reproduced it, and the new failure capture kept the evidence.
+- Run 1, 44/45: the client never counted its Pomp appointment, but was rewarded. Run 2, 41/45: the host logged a remote Pomp assignment, then a cancel; the client's Pomp counters stayed at 0, so it never applied the appointment.
+- Cause (a real bug): `HandlePompHost` dropped an assignment when `npcs[index]` was not yet a Pomp replica on the client. Pomp catches a client right after spawning, before the next snapshot creates the replica. The host then waited out its 75 s timer and cancelled.
+- Fix: an assignment for a replica that doesn't exist yet waits in a short list and is retried each frame for up to 5 s (`pompLateAssigns` counts these).
+- Lab race fixed too: the client reads each scenario step from a file every 0.1 s, so a Pomp assignment or Reflex start could arrive before the step's baseline and be counted into it. Pomp and Reflex counters now keep the baseline from the previous step.
+
+**Full lab suite on 0.9.1:** run while two other sessions had six MiSide and Spooky game windows open (CPU 70 to 100%).
+- Passed: transport 26 plus the no-keepalive mutant; all 16 single-process tours except compat-fail; LAN 15/15 (one retry); NPC sync 15/15; core co-op 14/14 (one retry); link 7/7 with the mutant caught; shop plain, late-ack, and both mutants caught. Steam tour 16/16.
+- Single-process tours that wrote no results on their first attempt (hide-and-seek audio, spectator UI, Crafters, Steam) passed on the retry; their evidence is in `private/failures/`.
+- Failed, then rerun after the fixes above:
+  - compat-fail 2/3 (no title within 23 s under load): rerun 3/3.
+  - encounter 44/45 and 41/45: the Pomp bug. Reruns: 45/45 once, and twice 44/45 where the only failure was Unity's `Failed to confine the cursor - ClipCursor failed` warning, which the hidden lab window logs when another app holds focus. `verify-encounter.py` now ignores that one engine message.
+  - soak 8/12, twice: every playability check passed (floor 2 reached, steady heap, no exceptions); only the timing limits failed. A/B under the same load, alternating 0.9.0 release DLLs and 0.9.1 (`launch-lab.ps1 -NoBuild`, new, installs the DLLs in artifacts/ without rebuilding):
+    - 0.9.0: 8/12 and 8/12; median host mod cost 0.95 and 1.11 ms, frame p95 9.7 and 14.0 ms.
+    - 0.9.1: 9/12 and 8/12; median host mod cost 1.03 and 1.32 ms, frame p95 12.2 and 17.9 ms.
+    - Both versions fail the same limits, and the cost follows each run's frame time (machine load), so no 0.9.1 regression shows. Quiet-machine soaks measured about 0.2 ms; the soak needs a rerun on a quiet machine.
+    - A first A/B attempt was invalid: `launch-lab.ps1` rebuilt 0.9.1 before every launch, which is why `-NoBuild` exists.
+
 ## 2026-10-26: 0.9.0 Steam online play and link health
 
 **Requests:**

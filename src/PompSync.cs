@@ -47,6 +47,10 @@ namespace BaldiTogether
         readonly HashSet<int> pompAppliedTokens = new HashSet<int>();
         int pompNextToken, pompAssigns, pompRewards, pompTimeouts, pompAttacks, pompTeaches, pompCancels, pompOwnerAssigns, pompOwnerDragFrames, pompOwnerPoints;
         byte[] pompLastOwnerPacket;
+        // An assignment can arrive before the snapshot that creates this client's Pomp replica; retry it briefly.
+        struct PompPendingAssign { public int Generation, Index, Token, Room; public float ClassTime, Until; }
+        readonly List<PompPendingAssign> pompPending = new List<PompPendingAssign>();
+        int pompLateAssigns;
         bool pompLabStarted;
 
         static T PompGet<T>(NoLateTeacher pomp, string name) { return (T)AccessTools.Field(typeof(NoLateTeacher), name).GetValue(pomp); }
@@ -56,7 +60,7 @@ namespace BaldiTogether
         {
             foreach (var appointment in pompAppointments.ToArray()) CancelPompAppointment(appointment, false);
             foreach (var local in pompLocal.ToArray()) ReleasePompLocal(local, true);
-            pompAppointments.Clear(); pompLocal.Clear(); pompSighted.Clear(); pompAppliedTokens.Clear();
+            pompAppointments.Clear(); pompLocal.Clear(); pompSighted.Clear(); pompAppliedTokens.Clear(); pompPending.Clear();
         }
 
         void UpdatePomp()
@@ -64,6 +68,7 @@ namespace BaldiTogether
             if (!Active || !Running || !worldReady) return;
             var manager = Singleton<BaseGameManager>.Instance;
             if (manager == null || manager.Ec == null) return;
+            if (pompPending.Count > 0) RetryPompAssigns();
             UpdatePompOwner(manager.Ec);
             if (Hosting) UpdatePompHost(manager.Ec);
         }
@@ -333,13 +338,8 @@ namespace BaldiTogether
             if (generation != epoch || !worldReady || (!Hosting && !readyAcknowledged) || manager == null || core == null) return true;
             if (sub == PompCmdAssign)
             {
-                if (LocalEliminated || index < 0 || index >= npcs.Length) return true;
-                var pomp = npcs[index] as NoLateTeacher; var ec = manager.Ec;
-                if (pomp == null || roomIndex < 0 || roomIndex >= ec.rooms.Count || ec.rooms[roomIndex].category != RoomCategory.Class) return true;
-                if (pompAppliedTokens.Count >= 4096) pompAppliedTokens.Clear();
-                if (!pompAppliedTokens.Add(token)) return true;
-                foreach (var old in pompLocal.Where(l => l.Pomp == pomp).ToArray()) ReleasePompLocal(old, false);
-                BeginPompLocal(pomp, index, token, ec.rooms[roomIndex], classTime);
+                if (!ApplyPompAssign(index, token, roomIndex, classTime) && pompPending.Count < 16)
+                    pompPending.Add(new PompPendingAssign { Generation = generation, Index = index, Token = token, Room = roomIndex, ClassTime = classTime, Until = Time.realtimeSinceStartup + 5 });
                 return true;
             }
             var local = pompLocal.FirstOrDefault(l => l.Index == index && l.Token == token);
@@ -379,6 +379,32 @@ namespace BaldiTogether
             }
             finally { Applying = false; }
             return true;
+        }
+
+        // False only when this client has no replica at that index yet, so the caller can retry.
+        bool ApplyPompAssign(int index, int token, int roomIndex, float classTime)
+        {
+            var manager = Singleton<BaseGameManager>.Instance;
+            if (LocalEliminated || index < 0 || manager == null || manager.Ec == null) return true;
+            if (index >= npcs.Length || npcs[index] == null) return false;
+            var pomp = npcs[index] as NoLateTeacher; var ec = manager.Ec;
+            if (pomp == null || roomIndex < 0 || roomIndex >= ec.rooms.Count || ec.rooms[roomIndex].category != RoomCategory.Class) return true;
+            if (pompAppliedTokens.Count >= 4096) pompAppliedTokens.Clear();
+            if (!pompAppliedTokens.Add(token)) return true;
+            foreach (var old in pompLocal.Where(l => l.Pomp == pomp).ToArray()) ReleasePompLocal(old, false);
+            BeginPompLocal(pomp, index, token, ec.rooms[roomIndex], classTime);
+            return true;
+        }
+
+        void RetryPompAssigns()
+        {
+            float now = Time.realtimeSinceStartup;
+            foreach (var p in pompPending.ToArray())
+            {
+                if (p.Generation != epoch || now > p.Until) { pompPending.Remove(p); continue; }
+                if (!ApplyPompAssign(p.Index, p.Token, p.Room, p.ClassTime)) continue;
+                pompPending.Remove(p); pompLateAssigns++;
+            }
         }
 
         // The UI half of native PlayerCaught, on the owner's replica of the same NoLateTeacher.
@@ -514,7 +540,7 @@ namespace BaldiTogether
         {
             return ",\"pompRemoteAssigns\":" + pompAssigns + ",\"pompRemoteRewards\":" + pompRewards + ",\"pompRemoteTimeouts\":" + pompTimeouts
                 + ",\"pompRemoteAttacks\":" + pompAttacks + ",\"pompRemoteTeaches\":" + pompTeaches + ",\"pompCancels\":" + pompCancels
-                + ",\"pompAppointments\":" + pompAppointments.Count + ",\"pompOwnerAssigns\":" + pompOwnerAssigns + ",\"pompOwnerAppointments\":" + pompLocal.Count
+                + ",\"pompAppointments\":" + pompAppointments.Count + ",\"pompOwnerAssigns\":" + pompOwnerAssigns + ",\"pompLateAssigns\":" + pompLateAssigns + ",\"pompOwnerAppointments\":" + pompLocal.Count
                 + ",\"pompOwnerDragFrames\":" + pompOwnerDragFrames + ",\"pompOwnerPoints\":" + pompOwnerPoints;
         }
 
