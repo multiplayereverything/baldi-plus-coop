@@ -106,5 +106,23 @@ foreach ($run in @(@{ Label = 'events'; Launch = @{ EventSync = $true } }, @{ La
     finally { Stop-LabPair }
 }
 
+# Challenges and Endless (src/ModeSync.cs): a challenge win for everyone, then Endless notebook resets, item respawns and
+# results; each mutant must fail.
+foreach ($run in @(@{ Label = 'challenge'; Mode = 'challenge'; Launch = @{ Scene = 'SpeedyChallenge'; ModeSync = $true } },
+                   @{ Label = 'challenge-mutant'; Mode = 'challenge'; Launch = @{ Scene = 'SpeedyChallenge'; ModeSync = $true; NoModeSync = $true } },
+                   @{ Label = 'endless'; Mode = 'endless'; Launch = @{ Scene = 'Endless_Schoolhouse_Medium'; ModeSync = $true } },
+                   @{ Label = 'endless-mutant'; Mode = 'endless'; Launch = @{ Scene = 'Endless_Schoolhouse_Medium'; ModeSync = $true; ClientResets = $true } })) {
+    Start-Sleep -Seconds 3
+    $launch = $run.Launch
+    & (Join-Path $PSScriptRoot 'launch-lab.ps1') @launch | Select-Object -Last 1
+    try {
+        & $python -I (Join-Path $modRoot 'tests/verify-modes.py') $run.Mode 200 | Select-Object -Last 1 | ForEach-Object { "$($run.Label): $_" }
+        $ok = $LASTEXITCODE -eq 0
+        if ($run.Label -like '*-mutant') { if ($ok) { $failed += "$($run.Label)-not-caught" } else { "$($run.Label): caught" } }
+        elseif (!$ok) { $failed += $run.Label; & (Join-Path $PSScriptRoot 'save-failure.ps1') -Name $run.Label }
+    }
+    finally { Stop-LabPair }
+}
+
 if ($failed.Count) { Write-Output "FAILED: $($failed -join ', ')"; exit 1 }
 Write-Output 'Lab suite passed.'

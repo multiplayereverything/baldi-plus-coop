@@ -129,7 +129,8 @@ namespace BaldiTogether
                 .SelectMany(t => t.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
                 .Where(m => (m.Name == "RestartLevel" || m.Name == "LoadNextLevel") && m.GetParameters().Length == 0).Cast<MethodBase>();
         }
-        static bool Prefix() { return !ModHooks.ClientWorld || TogetherRuntime.Applying; }
+        static bool Prefix(BaseGameManager __instance, MethodBase __originalMethod)
+        { return !ModHooks.ClientWorld || TogetherRuntime.Applying || ModHooks.Current.AllowClientModeEnd(__instance, __originalMethod.Name); }
     }
 
     [HarmonyPatch(typeof(BaseGameManager), "BeginPlay")]
@@ -163,7 +164,7 @@ namespace BaldiTogether
     static class NotebookPatch
     {
         static bool Prefix(Notebook __instance)
-        { if (__instance.collected) return false; var r = ModHooks.Current; return r == null || r.Request(__instance, 0); }
+        { if (TogetherRuntime.Taken(__instance)) return false; var r = ModHooks.Current; return r == null || r.Request(__instance, 0); }
     }
 
     [HarmonyPatch(typeof(StandardDoor), "Clicked")]

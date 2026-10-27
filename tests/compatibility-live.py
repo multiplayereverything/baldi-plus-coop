@@ -22,7 +22,7 @@ root=find_game(Path(__file__).resolve().parents[1])
 digest=hashlib.sha256((root/'BALDI_Data/Managed/Assembly-CSharp.dll').read_bytes()).hexdigest()
 def text(value):
     data=value.encode();return struct.pack('<H',len(data))+data
-def hello(protocol=15,version='0.9.2',game=digest,code=''):
+def hello(protocol=16,version='0.9.3',game=digest,code=''):
     return b'\x01'+struct.pack('<i',protocol)+text(version)+text(game)+text('Compatibility probe')+text(code)
 cases={
     'wrong-protocol':(hello(protocol=-1),'Mod version mismatch'),

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.3, 2026-10-27 (local build, not uploaded yet)
+
+- Challenges: winning a challenge (Grapple, Speedy, Stealthy) shows the win screen in every player's game. Before, only the host saw it, and the host's return to the menu dropped everyone mid-floor with "Disconnected from host". Teammates now treat the host leaving after a win as the end of the run.
+- Endless:
+  - notebooks can be collected again after they come back. The co-op notebook check counted a notebook as gone forever once collected;
+  - notebook reset timers and item respawns are the host's. A teammate's game skipped neither and picked its own random notebook and item, so the floors drifted apart. Teammates now get the host's resets and respawned items;
+  - when the whole team is caught, every player sees the Endless results screen (score and high score). Before, only the host did, and the others were left on a black screen.
+- The host's map and inventory challenge settings now reach every player.
+- Lab: `launch-lab.ps1 -Scene <scene>` starts any scene (challenges, Endless) instead of floor 1, and `-ModeSync` with `tests/verify-modes.py` checks a challenge win (5 checks) or an Endless run (8 checks). The `-NoModeSync` and `-ClientResets` mutants must fail them. All four runs are in the lab suite.
+- Protocol 16: everyone must update to 0.9.3.
+
 ## 0.9.2, 2026-10-27
 
 - Steam rooms only accept players who are in the host's Steam lobby. Anyone who knew the host's Steam ID could open a connection to it before. A caller who is not yet listed gets 5 s for the lobby list to catch up, then is turned away.

@@ -1,4 +1,4 @@
-param([switch]$TestActions, [switch]$SpriteTour, [switch]$FocusedSync, [switch]$FlowSync, [switch]$NpcSync, [switch]$LobbyTour, [switch]$LanTour, [switch]$Encounter, [switch]$Soak, [switch]$Profile, [switch]$Visible, [string]$Seed, [string]$Chaos, [int]$StallHost, [switch]$NoKeepAlive, [switch]$LateShopAck, [switch]$NoLateAck, [switch]$NoOwnGlue, [switch]$NoBuild, [switch]$Hidden, [switch]$ClientEvents, [switch]$EventSync, [switch]$NoEventSync)
+param([switch]$TestActions, [switch]$SpriteTour, [switch]$FocusedSync, [switch]$FlowSync, [switch]$NpcSync, [switch]$LobbyTour, [switch]$LanTour, [switch]$Encounter, [switch]$Soak, [switch]$Profile, [switch]$Visible, [string]$Seed, [string]$Chaos, [int]$StallHost, [switch]$NoKeepAlive, [switch]$LateShopAck, [switch]$NoLateAck, [switch]$NoOwnGlue, [switch]$NoBuild, [switch]$Hidden, [switch]$ClientEvents, [switch]$EventSync, [switch]$NoEventSync, [string]$Scene, [switch]$ModeSync, [switch]$NoModeSync, [switch]$ClientResets)
 # -NoBuild installs the DLLs already in artifacts/ (for example an older release, for an A/B run) instead of rebuilding.
 # By default both copies start minimized as small titled windows that restore at the right edge (scripts/lab-window.ps1); -Hidden hides them.
 # -Visible shows both windows (needed for focus and Alt+Tab tests; focus cannot move to a hidden window).
@@ -98,6 +98,13 @@ if ($NoKeepAlive) { $hostArgs += '-bt-lab-no-keepalive'; $clientArgs += '-bt-lab
 # -EventSync: both copies add the same fog event; the host runs it for 6 s and the client must mirror it (tests/verify-events.py).
 if ($EventSync) { $hostArgs += '-bt-event-sync'; $clientArgs += '-bt-event-sync' }
 if ($NoEventSync) { $hostArgs += '-bt-lab-no-event-sync' } # mutant: the host sends no event states
+# -Scene <SceneObject>: the host starts this scene instead of floor 1 (challenges, Endless). -ModeSync: the challenge or
+# Endless check in src/ModeSync.cs (tests/verify-modes.py). -NoModeSync: mutant, no mode states and no Endless results on
+# clients. -ClientResets: mutant, clients run their own notebook reset timers and item respawns.
+if ($Scene) { $hostArgs += @('-bt-scene', $Scene) }
+if ($ModeSync) { $hostArgs += '-bt-mode-sync'; $clientArgs += '-bt-mode-sync' }
+if ($NoModeSync) { $hostArgs += '-bt-lab-no-mode-sync'; $clientArgs += '-bt-lab-no-mode-sync' }
+if ($ClientResets) { $clientArgs += '-bt-lab-client-resets' }
 if ($ClientEvents) { $clientArgs += '-bt-lab-client-events' } # mutant: the client may start its own random-event timers
 if ($Seed) { $hostArgs += @('-bt-seed', $Seed) } # the host's run seed (lab); clients always take the host's
 $hostArgs += $workspaceArgs; $clientArgs += $sharedArgs

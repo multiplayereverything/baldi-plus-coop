@@ -168,21 +168,29 @@ namespace BaldiTogether
             foreach (var entry in catalog)
             {
                 ItemObject item; if (!items.TryGetValue(entry.Item2, out item) || !item.addToInventory) throw new IOException("Host item asset is unavailable: " + entry.Item2);
-                Pickup pickup;
-                if (!existing.TryGetValue(entry.Item1, out pickup))
-                {
-                    RoomController room = manager.Ec.CellFromPosition(entry.Item3).room;
-                    if (room == null) throw new IOException("Host item placement is outside a room.");
-                    pickup = manager.Ec.CreateItem(room, item, new Vector2(entry.Item3.x, entry.Item3.z));
-                    pickup.icon = manager.Ec.map.AddIcon(pickup.iconPre, pickup.transform, Color.white); room.pickups.Add(pickup);
-                }
-                pickup.transform.position = entry.Item3;
-                if (Key(pickup) != entry.Item1) throw new IOException("Host item coordinates did not match its ID.");
+                Pickup pickup = SupplyPickupAt(entry.Item1, item, entry.Item3, existing);
                 pickup.free = true; pickup.AssignItem(item); pickup.Hide(false);
                 supplies.Add(entry.Item1, new Supply { Pickup = pickup, Item = item });
             }
             catalogApplied = true; Log("Applied host item catalog: " + supplies.Count + " supplies, hash=" + SupplyDigest());
             SendReady();
+        }
+
+        // The client's pickup at a host supply's position, created in its room when this copy has none there.
+        Pickup SupplyPickupAt(string key, ItemObject item, Vector3 position, Dictionary<string, Pickup> existing)
+        {
+            var manager = Singleton<BaseGameManager>.Instance;
+            Pickup pickup;
+            if (!existing.TryGetValue(key, out pickup))
+            {
+                RoomController room = manager.Ec.CellFromPosition(position).room;
+                if (room == null) throw new IOException("Host item placement is outside a room.");
+                pickup = manager.Ec.CreateItem(room, item, new Vector2(position.x, position.z));
+                pickup.icon = manager.Ec.map.AddIcon(pickup.iconPre, pickup.transform, Color.white); room.pickups.Add(pickup);
+            }
+            pickup.transform.position = position;
+            if (Key(pickup) != key) throw new IOException("Host item coordinates did not match its ID.");
+            return pickup;
         }
 
         public bool BeforePickup(Pickup pickup)
@@ -395,7 +403,7 @@ namespace BaldiTogether
         {
             return "{\"sampleUtcMs\":" + (DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond) + ",\"host\":" + Hosting.ToString().ToLowerInvariant() + ",\"self\":" + self + ",\"peers\":" + peers.Values.Count(p => p.Accepted)
                 + ",\"epoch\":" + epoch + ",\"ready\":" + worldReady.ToString().ToLowerInvariant() + ",\"ack\":" + readyAcknowledged.ToString().ToLowerInvariant()
-                + ",\"notebooks\":" + notebooks.Values.Count(n => n != null && n.collected) + ",\"openDoors\":" + doors.Values.Count(d => d != null && d.open)
+                + ",\"notebooks\":" + notebooks.Values.Count(n => n != null && Taken(n)) + ",\"openDoors\":" + doors.Values.Count(d => d != null && d.open)
                 + ",\"acceptedInteractions\":" + acceptedInteractions + ",\"observedDoorOpens\":" + observedDoorOpens + ",\"observedNpcFrames\":" + observedNpcFrames
                 + ",\"completedActivities\":" + activities.Values.Count(a => a != null && a.IsCompleted) + ",\"testStep\":" + testStep + ",\"npcCount\":" + npcs.Length
                 + ",\"worldHash\":\"" + worldHash + "\",\"remotePoses\":" + peers.Values.Count(p => p.Id != self && p.HasPose)

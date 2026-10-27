@@ -29,7 +29,7 @@ namespace BaldiTogether
 
     public sealed partial class TogetherRuntime : MonoBehaviour
     {
-        public const string ModVersion = "0.9.2";
+        public const string ModVersion = "0.9.3";
         public static TogetherRuntime Instance;
         public static bool Applying;
         public static Action<string> Log = delegate { };
@@ -68,7 +68,7 @@ namespace BaldiTogether
         int acceptedInteractions, observedDoorOpens, observedNpcFrames;
         string pendingNext;
         int pendingLives, pendingAttempts, pendingLastLevel, pendingMode, pendingLifeMode;
-        bool pendingTimeLimit;
+        bool pendingTimeLimit, pendingMapChallenge, pendingInventoryChallenge;
         string autoRole;
         // Lab auto-join retries while the host is still starting: two lab copies start at once and the client often
         // reached the title first, got "Connection refused" and sat idle until the test timed out.
@@ -344,7 +344,7 @@ namespace BaldiTogether
             }
             if (e.Kind == "disconnected")
             {
-                if (!Hosting) { if(!Network.Steam&&BeginHostMigration())return;Disconnect("Disconnected from host. Return to the menu to rejoin."); return; }
+                if (!Hosting) { if(ModeEndedByHost())return;if(!Network.Steam&&BeginHostMigration())return;Disconnect("Disconnected from host. Return to the menu to rejoin."); return; }
                 Peer leaving;
                 if (peers.TryGetValue(e.Peer, out leaving)) { DestroyAvatar(leaving); peers.Remove(e.Peer);latency.Remove(e.Peer);probes.Remove(e.Peer);latencySampleAt.Remove(e.Peer); Tell((leaving.Name ?? "Peer") + " left."); if (leaving.Accepted) PlayTeamSound("leave"); BroadcastRoster();CheckTeamWipe(null); }
                 return;
@@ -414,7 +414,7 @@ namespace BaldiTogether
                 try
                 {
                     Notebook notebook; StandardDoor door; Activity activity;
-                    if (kind == 0 && notebooks.TryGetValue(key, out notebook) && notebook != null && !notebook.collected && !notebook.hidden && Vector3.Distance(sender.Position, notebook.transform.position) < 20)
+                    if (kind == 0 && notebooks.TryGetValue(key, out notebook) && notebook != null && !notebook.hidden && Vector3.Distance(sender.Position, notebook.transform.position) < 20)
                     { notebook.Clicked(0); acceptedInteractions++; Log("Accepted notebook from " + sender.Name + ": " + key); }
                     if (kind == 1 && doors.TryGetValue(key, out door) && door != null && Vector3.Distance(sender.Position, door.CenteredPosition) < 20)
                     { door.Clicked(0); acceptedInteractions++; Log("Accepted door from " + sender.Name + ": " + key); }
@@ -462,7 +462,7 @@ namespace BaldiTogether
             else if (op == Op.Start)
             {
                 int generation = r.ReadInt32(); Seed = r.ReadInt32(); string scene = Wire.Text(r, 128);
-                pendingNext = Wire.Text(r, 128); pendingLives = r.ReadInt32(); pendingAttempts = r.ReadInt32(); pendingLastLevel = r.ReadInt32(); pendingMode = r.ReadInt32(); pendingLifeMode = r.ReadInt32(); pendingTimeLimit = r.ReadBoolean();
+                pendingNext = Wire.Text(r, 128); pendingLives = r.ReadInt32(); pendingAttempts = r.ReadInt32(); pendingLastLevel = r.ReadInt32(); pendingMode = r.ReadInt32(); pendingLifeMode = r.ReadInt32(); pendingTimeLimit = r.ReadBoolean(); pendingMapChallenge = r.ReadBoolean(); pendingInventoryChallenge = r.ReadBoolean();
                 if (generation <= epoch) throw new IOException("Invalid level generation.");
                 epoch = generation; sceneName = scene; ResetWorld(); pendingScene = scene;nextClientLoad=0;
                 Tell("Loading the host's level with seed " + Seed + "..."); SetPanel(false);
@@ -481,7 +481,7 @@ namespace BaldiTogether
                 if (generation == epoch && worldReady && index >= 0 && index < npcs.Length && npcs[index] is Baldi)
                 {
                     Applying = true;
-                    try { deathSent=true;ReleaseSpectator();var core = Singleton<CoreGameManager>.Instance; core.EndGame(core.GetPlayer(0).transform, (Baldi)npcs[index]); }
+                    try { deathSent=true;ReleaseSpectator();PrepareModeWipe();var core = Singleton<CoreGameManager>.Instance; core.EndGame(core.GetPlayer(0).transform, (Baldi)npcs[index]); }
                     finally { Applying = false; }
                 }
             }
@@ -514,7 +514,7 @@ namespace BaldiTogether
             SendAll(Wire.Packet(Op.Start, w =>
             {
                 w.Write(epoch); w.Write(Seed); Wire.Text(w, sceneName); Wire.Text(w, core.nextLevel != null ? core.nextLevel.name : sceneName);
-                w.Write(core.Lives); w.Write(core.Attempts); w.Write(core.lastLevelNumber); w.Write((int)core.currentMode); w.Write((int)core.lifeMode); w.Write(core.timeLimitChallenge);
+                w.Write(core.Lives); w.Write(core.Attempts); w.Write(core.lastLevelNumber); w.Write((int)core.currentMode); w.Write((int)core.lifeMode); w.Write(core.timeLimitChallenge); w.Write(core.mapChallenge); w.Write(core.inventoryChallenge);
             }));
             Tell("Loading " + sceneName + ", seed " + Seed + "."); SetPanel(false);
         }
@@ -558,6 +558,7 @@ namespace BaldiTogether
             core.SaveEnabled = false; core.readyToStart = false;
             core.SetLives(pendingLives, true); core.SetAttempts(pendingAttempts); core.lastLevelNumber = pendingLastLevel;
             core.currentMode = (Mode)pendingMode; core.lifeMode = (LifeMode)pendingLifeMode; core.timeLimitChallenge = pendingTimeLimit; // shapes TimeOut
+            core.mapChallenge = pendingMapChallenge; core.inventoryChallenge = pendingInventoryChallenge;
             core.nextLevel = Resources.FindObjectsOfTypeAll<SceneObject>().FirstOrDefault(s => s.name == pendingNext);
             if (core.nextLevel == null) throw new IOException("Host's next level is unavailable: " + pendingNext);
             Time.timeScale = 0; AudioListener.pause = false;
@@ -569,6 +570,14 @@ namespace BaldiTogether
             if (loader == null) { autoStart = true; autoStartAt = Time.realtimeSinceStartup + 2; return; }
             SceneObject scene = loader.list.scenes.FirstOrDefault(s => s != null && s.levelNo == 0);
             if (scene == null) scene = loader.list.scenes[0];
+            string wanted = Lab.Enabled ? Lab.ArgValue("-bt-scene") : null; // lab start path for challenges and Endless
+            if (wanted != null)
+            {
+                var all = Resources.FindObjectsOfTypeAll<SceneObject>();
+                var named = all.FirstOrDefault(s => s.name == wanted);
+                if (named != null) scene = named;
+                Log("LAB: scene " + wanted + (named != null ? " found" : " missing") + "; scenes: " + string.Join(",", all.Select(s => s.name).OrderBy(n => n, StringComparer.Ordinal).ToArray()));
+            }
             loader.useSeed = true; loader.seed = Seed; loader.Initialize(2);
             Singleton<CoreGameManager>.Instance.SaveEnabled = false;
             if(Lab.Enabled && Lab.HasArg("-bt-elevator-tour"))
@@ -764,7 +773,7 @@ namespace BaldiTogether
                 Activity[] completed = activities.Values.Where(a => a != null && a.IsCompleted).ToArray();
                 w.Write((ushort)completed.Length);
                 foreach (Activity a in completed) { Wire.Text(w, Key(a)); w.Write((bool)HarmonyLib.AccessTools.Field(typeof(Activity), "correct").GetValue(a)); }
-                Notebook[] collected = notebooks.Values.Where(n => n != null && n.collected).ToArray();
+                Notebook[] collected = notebooks.Values.Where(n => n != null && Taken(n)).ToArray();
                 w.Write((ushort)collected.Length); foreach (Notebook n in collected) Wire.Text(w, Key(n));
                 w.Write((ushort)doors.Count);
                 foreach (var entry in doors) { Wire.Text(w, entry.Key); w.Write(entry.Value.open); w.Write(entry.Value.locked); }
@@ -791,7 +800,7 @@ namespace BaldiTogether
                 { string key = Wire.Text(r, 256); bool correct = r.ReadBoolean(); Activity a; if (apply && activities.TryGetValue(key, out a) && a != null && !a.IsCompleted) a.Completed(0, correct); }
                 count = r.ReadUInt16(); if (count > 256) throw new IOException("Notebook limit exceeded.");
                 for (int i = 0; i < count; i++)
-                { string key = Wire.Text(r, 256); Notebook n; if (apply && notebooks.TryGetValue(key, out n) && n != null && !n.collected) n.Clicked(0); }
+                { string key = Wire.Text(r, 256); Notebook n; if (apply && notebooks.TryGetValue(key, out n) && n != null && !Taken(n)) n.Clicked(0); }
                 count = r.ReadUInt16(); if (count > 1024) throw new IOException("Door limit exceeded.");
                 for (int i = 0; i < count; i++)
                 {

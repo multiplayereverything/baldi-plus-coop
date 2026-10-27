@@ -1,5 +1,27 @@
 # Development journal
 
+## 2026-10-27: 0.9.3 challenges and Endless (local only)
+
+**Request:** next batch from HANDOFF (challenges and Endless). New rule relayed from the user: upload nothing to GitHub until they say so, commit locally only.
+
+**Findings** (decompiled `BaseChallengeGameManager`, `EndlessGameManager`, `Activity`, `ChallengeWin`, `CoreGameManager.EndSequence`; private):
+- A challenge win is `LoadNextLevel`: win screen, then `ChallengeWin` quits after 7 s. Clients never ran it (host-only transitions), and the host's quit dropped them; a client could even try host migration.
+- Endless notebooks come back through activity reset timers and `InstantReset` with `UnityEngine.Random`. `Notebook.collected` never clears, and the co-op notebook gate checked it, so a returned notebook could never be collected again in co-op.
+- Each Endless collection calls `RespawnItemInRandomRoom` (random pickup, random item); clients ran their own.
+- The co-op team wipe calls `CoreGameManager.EndGame` directly, skipping Endless's two-lives override, and clients never ran `RestartLevel` (the Endless results screen).
+- `mapChallenge` and `inventoryChallenge` were missing from the run state.
+
+**Changes:** `src/ModeSync.cs` (new `Op.ModeState`: challenge won, activity reset, supply respawn), `Taken()` notebook gate in the patch, the host interaction check and world sync, `ModeEndedByHost` before migration, `PrepareModeWipe` on both wipe paths, `ClientTransitionPatch` lets an Endless client show results after a wipe, `SupplyClaims.Release`, `SupplyPickupAt` shared with the catalog, protocol 16, `-bt-scene` lab start path.
+
+First Endless run: 7/8. The client still started its own reset timers, because the mirrored collection runs under `Applying`, which the new prefixes exempted. Removed that exemption for reset timers and respawns (the mirror calls `ResetActivity` and assigns items directly).
+
+**Results** (two processes, BepInEx host and MelonLoader client, minimized lab windows):
+- `-Scene Endless_Schoolhouse_Medium -ModeSync`: 8/8. The client blocked 2 reset timers and 5 respawns (3 bus-pass replacements at load, 2 after collections), mirrored 1 reset and 2 respawns, matched the host's supply digest, collected the returned notebook (2 found on both), and both showed the results screen.
+- `-NoModeSync` mutant: 2/8, caught. `-ClientResets` mutant: 5/8, caught.
+- `-Scene SpeedyChallenge -ModeSync`: 5/5; both copies back at the menu, the client's host drop counted as the end of the run. `-NoModeSync` mutant: 1/5, caught.
+- Regression on the new build: core 15/15, events 7/7, NPC sync 15/15, spectator-tour 16/16, compat-fail-tour 3/3, lobby-tour 32/32, transport 26/26 plus the no-keepalive mutant.
+- Not run: the full lab suite with the new mode step, Grapple and Stealthy, other Endless maps, a run long enough for Endless's late students.
+
 ## 2026-10-27: 0.9.2 second PC, Steam lobby gate, random events, field-trip pick, light lab windows
 
 **Request:** relayed from the user:

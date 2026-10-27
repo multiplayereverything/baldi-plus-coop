@@ -23,7 +23,7 @@ namespace BaldiTogether
         static string workspace, shared;
         public static string Workspace { get { return workspace ?? (workspace = Path.GetFullPath(ArgValue("-bt-workspace") ?? Path.Combine(TogetherRuntime.Root, "MultiplayerMod"))); } }
         public static string Shared { get { return shared ?? (shared = Path.GetFullPath(ArgValue("-bt-shared") ?? Path.Combine(TogetherRuntime.Root, "../../../MultiplayerMod"))); } }
-        static string ArgValue(string flag)
+        internal static string ArgValue(string flag)
         {
             string[] all = Environment.GetCommandLineArgs();
             int i = Array.IndexOf(all, flag);

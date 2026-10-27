@@ -2,6 +2,12 @@
 
 **Baldi Together 0.9.2:** experimental co-op for Baldi's Basics Plus **0.14.5**, over your LAN or online through Steam. Windows x64 / Unity 2020.3.49f1. BepInEx and MelonLoader builds share the same network implementation and can play together. Use **one loader per game copy**. Everyone must update to 0.9.2 (protocol 15). Older ZIPs are retained for rollback.
 
+## New in 0.9.3
+
+- **Challenges end together.** When you win Grapple, Speedy or Stealthy, every player sees the win screen. Before, only the host did, and everyone else was disconnected.
+- **Endless works in co-op.** Notebooks come back and can be collected again, respawned items appear in the same place for everyone, and when the whole team is caught everyone gets the results screen with the score.
+- The host's map and inventory challenge settings now apply to every player.
+
 ## New in 0.9.2
 
 - **Steam rooms are for your lobby only.** Only players who joined your Steam room can connect to your game.
@@ -353,7 +359,7 @@ LAN games use direct TCP on a trusted network, and the optional room code is sen
 - Teammate-only spectating until the next round, native team wipe and remote elevator activation while the host is spectating.
 - Controlled LAN host migration, exact-version compatibility display and measured connection indicators.
 
-Teammates' item effects on NPCs and the world are relayed to the host for the items listed in docs/NPC-COVERAGE-0.7.0.md. Inventory transfers, repeatable/non-inventory rewards outside Johnny's shop, item swaps, dynamic drops, puzzle presentation, field trips and random events are not comprehensively synchronized. The old alternate StoreScreen interface and forwarding client-only YTP effects remain unsupported. Shop visitor dialogue remains local. Activities are solved locally and their completion result is shared. Free pickups and purchases require an empty inventory slot. If a recipient disconnects during an unacknowledged delivery, stock stays consumed and a purchase remains spent to prevent duplication. All players share the supplied character artwork; names identify teammates. This is an early co-op build, not complete replication of every game system. Challenge/endless/custom content and combinations with other mods have not been validated.
+Teammates' item effects on NPCs and the world are relayed to the host for the items listed in docs/NPC-COVERAGE-0.7.0.md. Inventory transfers, repeatable/non-inventory rewards outside Johnny's shop, item swaps, dynamic drops, puzzle presentation, field trips and random events are not comprehensively synchronized. The old alternate StoreScreen interface and forwarding client-only YTP effects remain unsupported. Shop visitor dialogue remains local. Activities are solved locally and their completion result is shared. Free pickups and purchases require an empty inventory slot. If a recipient disconnects during an unacknowledged delivery, stock stays consumed and a purchase remains spent to prevent duplication. All players share the supplied character artwork; names identify teammates. This is an early co-op build, not complete replication of every game system. Challenges and Endless are tested in the lab (0.9.3): a challenge win and the Endless results screen reach everyone, and Endless notebook resets and item respawns follow the host. Endless's 99-second notebook timer only pauses while the host stands in the room, not a teammate. Custom content and combinations with other mods have not been validated.
 
 ## Install either build elsewhere
 

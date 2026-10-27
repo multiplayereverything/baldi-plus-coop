@@ -12,7 +12,7 @@ $common = @('Transport.cs','SteamLink.cs','SteamOnline.cs','SteamLab.cs','LinkHe
 $references = @((Join-Path $managed 'Assembly-CSharp.dll'), (Join-Path $managed 'Unity.TextMeshPro.dll'), (Join-Path $managed 'com.rlabrecque.steamworks.net.dll')) + @(Get-ChildItem -LiteralPath $managed -Filter 'UnityEngine*.dll' | ForEach-Object FullName)
 $common += Join-Path $modRoot 'src/MultiplayerAudio.cs'
 $common += @('Spectator.cs','HostMigration.cs','Compatibility.cs','NpcExpansionLab.cs','RemoteElevators.cs') | ForEach-Object {Join-Path $modRoot "src/$_"}
-$common += @('VendingSync.cs','ResultsSync.cs','DebugConsole.cs','CountdownSpawn.cs','BaldiContact.cs','LanDiscovery.cs','SpectatorHud.cs','TeamSounds.cs','LobbyLab.cs','NpcFeatures.cs','BeansSync.cs','CraftersSync.cs','PompSync.cs','TheTestSync.cs','ReflexSync.cs','ChalklesSync.cs','ItemsSync.cs','SpectatorUi.cs','EncounterLab.cs','PerfProbe.cs','HallMonitor.cs','HallMonitorSync.cs','HostOnlyStart.cs','FocusLab.cs','EventSync.cs') | ForEach-Object {Join-Path $modRoot "src/$_"}
+$common += @('VendingSync.cs','ResultsSync.cs','DebugConsole.cs','CountdownSpawn.cs','BaldiContact.cs','LanDiscovery.cs','SpectatorHud.cs','TeamSounds.cs','LobbyLab.cs','NpcFeatures.cs','BeansSync.cs','CraftersSync.cs','PompSync.cs','TheTestSync.cs','ReflexSync.cs','ChalklesSync.cs','ItemsSync.cs','SpectatorUi.cs','EncounterLab.cs','PerfProbe.cs','HallMonitor.cs','HallMonitorSync.cs','HostOnlyStart.cs','FocusLab.cs','EventSync.cs','ModeSync.cs') | ForEach-Object {Join-Path $modRoot "src/$_"}
 $netstandard = Join-Path $managed 'netstandard.dll'
 if (Test-Path -LiteralPath $netstandard) { $references += $netstandard }
 foreach ($target in @('BepInEx','MelonLoader')) {

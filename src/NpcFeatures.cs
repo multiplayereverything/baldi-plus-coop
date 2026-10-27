@@ -28,6 +28,7 @@ namespace BaldiTogether
             Guard("ResetCrafters", ResetCrafters);
             Guard("ResetPomp", ResetPomp);
             Guard("ResetEvents", ResetEvents);
+            Guard("ResetModes", ResetModes);
             Guard("ResetTheTest", ResetTheTest);
             Guard("ResetReflex", ResetReflex);
             Guard("ResetChalkles", ResetChalkles);
@@ -46,6 +47,7 @@ namespace BaldiTogether
             Guard("UpdateItems", UpdateItems);
             Guard("UpdateHallMonitor", UpdateHallMonitor);
             Guard("UpdateEventLab", UpdateEventLab);
+            Guard("UpdateModeLab", UpdateModeLab);
         }
 
         void UpdateEncounterLabGuarded() { Guard("UpdateEncounterLab", UpdateEncounterLab); }
@@ -57,7 +59,7 @@ namespace BaldiTogether
 
         bool HandleNpcFeatureHost(Op op, BinaryReader r)
         {
-            return HandleBeansHost(op, r) || HandleCraftersHost(op, r) || HandlePompHost(op, r) || HandleTheTestHost(op, r) || HandleReflexHost(op, r) || HandleChalklesHost(op, r) || HandleItemsHost(op, r) || HandleEventHost(op, r);
+            return HandleBeansHost(op, r) || HandleCraftersHost(op, r) || HandlePompHost(op, r) || HandleTheTestHost(op, r) || HandleReflexHost(op, r) || HandleChalklesHost(op, r) || HandleItemsHost(op, r) || HandleEventHost(op, r) || HandleModeHost(op, r);
         }
 
         static void WriteFeatureSection(BinaryWriter w, Action<BinaryWriter> write)
@@ -110,7 +112,7 @@ namespace BaldiTogether
 
         string NpcFeatureDiagnostic()
         {
-            return BeansDiagnostic() + CraftersDiagnostic() + PompDiagnostic() + TheTestDiagnostic() + ReflexDiagnostic() + ChalklesDiagnostic() + ItemsDiagnostic() + HallMonitorDiagnostic() + HostOnlyStartDiagnostic() + EncounterDiagnostic() + EventDiagnostic();
+            return BeansDiagnostic() + CraftersDiagnostic() + PompDiagnostic() + TheTestDiagnostic() + ReflexDiagnostic() + ChalklesDiagnostic() + ItemsDiagnostic() + HallMonitorDiagnostic() + HostOnlyStartDiagnostic() + EncounterDiagnostic() + EventDiagnostic() + ModeDiagnostic();
         }
 
         void UpdateNpcFeatureLabs()

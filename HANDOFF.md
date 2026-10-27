@@ -4,11 +4,21 @@ Updated 2026-10-27. Start here when picking the project up on a new PC. A new se
 
 ## Where things stand
 
-- **Version 0.9.2**, protocol 15, exact version match required. Released as a GitHub pre-release: https://github.com/multiplayereverything/baldi-plus-coop/releases/tag/v0.9.2
+- **Version 0.9.3**, protocol 16, exact version match required. Committed locally only: since 2026-10-27 the user wants nothing uploaded to GitHub (no push, release, PR or issue update) until they say so. The last public release is v0.9.2: https://github.com/multiplayereverything/baldi-plus-coop/releases/tag/v0.9.2
 - Target: Baldi's Basics Plus **0.14.5** (Steam, app 1275890), Windows x64, Unity 2020.3.49f1.
 - Two builds from one source tree: BepInEx 5.4.23.5 (x64) and MelonLoader 0.7.3. They play together; each game copy uses one loader.
 - Online play: Steam lobbies and P2P (the game's own Steamworks.NET) or LAN. No global relay; it was removed at the user's request.
 - Second PC (2026-10-27): the repo lives outside the game folder (`Desktop/AIStuff/ai-work-pc-games/Baldi Multipplayer Mod`); see the dev setup below.
+
+### Done in 0.9.3 (local)
+
+- Challenge win for everyone: the host sends `Op.ModeState` kind 0 after `BaseChallengeGameManager.LoadNextLevel`; clients show their own win screen and treat the host's leaving as the end of the run (`ModeEndedByHost`, no migration).
+- Endless:
+  - a notebook is "taken" only while collected and hidden (`TogetherRuntime.Taken`), so it can be collected again after its activity resets;
+  - clients skip `Activity.StartResetTimer`, `InstantReset` and `EnvironmentController.RespawnItemIn*`; the host sends each activity reset (kind 1) and each respawned item with its pickup key (kind 2), which rejoins the shared supplies;
+  - a team wipe sets two lives (as `EndlessGameManager.EndGame` does) and lets the client run Endless's `RestartLevel`, its results screen.
+- `mapChallenge` and `inventoryChallenge` are in the run state.
+- Lab: `launch-lab.ps1 -Scene <SceneObject> -ModeSync`, `tests/verify-modes.py challenge|endless`, mutants `-NoModeSync` and `-ClientResets`; in the lab suite. Scene names: `SpeedyChallenge`, `GrappleChallenge`, `StealthyChallenge`, `Endless_<Schoolhouse|Factory|Laboratory|Maintenance>_<Small|Medium|Large>`, `EndlessPremadeMedium`, `Camping`, `Farm`.
 
 ### Done in 0.9.2
 
@@ -30,19 +40,20 @@ Updated 2026-10-27. Start here when picking the project up on a new PC. A new se
 2. **Never tested with real players:** two different Steam accounts, friends on separate PCs, four players.
 3. **Events still host-only on clients:** Flood (water, whirlpools), Party (balloons, party pickup), Gravity (flippers, flipped view), BalderDash and Student Shuffle. Their NPCs and doors replicate, but each player's own visuals do not. The private research note `private/notes/events-modes-research.md` has the per-event details (decompiled line numbers, not for the public repo).
 4. **Lever forwarding not proven in a lab run.** Floor 1 of the lab seed has no host-owned lever; the event lab presses one when the floor has it.
-5. **Challenges and Endless:**
-   - a challenge win makes the host quit, which disconnects everyone;
-   - Endless repeats notebooks, but the mod's notebook model is one-time;
-   - Endless item respawns are not in the shared catalog.
-   - Neither mode has a lab start path yet.
+5. **Challenges and Endless, still open:**
+   - Endless's notebook reset timer pauses only while the host stands in the room (`ColliderGroup.HasPlayer` sees the host's own player), not a teammate;
+   - Endless students arrive on a 120 s timer; they should replicate as late NPCs, but no lab run lasted that long;
+   - only `SpeedyChallenge` and `Endless_Schoolhouse_Medium` were run; Grapple, Stealthy and the other Endless maps were not;
+   - an item respawned into a pickup whose delivery is still in flight is skipped on the host (logged).
 6. Same-folder setups (two copies from one game folder) can race for `BepInEx.cfg` at startup. Separate lab copies avoid it.
 
 ### Next steps
 
-1. Challenges and Endless: a lab start path per mode, then win and results broadcast, a notebook respawn op, and host item respawns.
-2. Mirror the remaining events' local effects (Flood, Party, Gravity), with host-owned positions.
-3. A two-account Steam session, then a playtest with friends. Ask testers for F2 `save` reports and `Player.log`.
-4. Every version: tagged GitHub release (test builds as pre-releases); CHANGELOG, README, MODLOG and this file updated; `um publish check <release folder> --game <game>/BALDI_Data` passing.
+1. When the user says to upload: push main, release v0.9.3 as a pre-release (`um publish check` on both ZIPs), update the Co-op Anything PR #218 write-up and tell the Website session.
+2. Run Grapple, Stealthy and a large Endless map through `-ModeSync`; one long Endless run for late students.
+3. Mirror the remaining events' local effects (Flood, Party, Gravity), with host-owned positions.
+4. A two-account Steam session, then a playtest with friends. Ask testers for F2 `save` reports and `Player.log`.
+5. Every version (once uploads are allowed again): tagged GitHub release (test builds as pre-releases); CHANGELOG, README, MODLOG and this file updated; `um publish check <release folder> --game <game>/BALDI_Data` passing.
 
 ## Dev setup on a new PC
 

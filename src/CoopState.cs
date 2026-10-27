@@ -11,6 +11,8 @@ namespace BaldiTogether
         readonly Dictionary<int, Claim> pending = new Dictionary<int, Claim>();
         int nextToken;
         public bool IsClaimed(string key) { return claims.ContainsKey(key); }
+        // A respawned item frees its pickup again; a claim still being delivered keeps it.
+        public bool Release(string key) { Claim claim; if (!claims.TryGetValue(key, out claim)) return true; if (!claim.Settled) return false; claims.Remove(key); return true; }
         public bool TryClaim(string key, int owner, out int token)
         {
             token = 0;

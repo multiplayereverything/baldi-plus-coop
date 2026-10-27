@@ -171,7 +171,7 @@ namespace BaldiTogether
             deathSent=true;int index=Array.IndexOf(npcs,baldi);
             if(index>=0)SendAll(Wire.Packet(Op.End,w=>{w.Write(epoch);w.Write(index);}));
             ReleaseSpectator();Applying=true;
-            try{var core=Singleton<CoreGameManager>.Instance;core.EndGame(core.GetPlayer(0).transform,baldi);}
+            try{PrepareModeWipe();var core=Singleton<CoreGameManager>.Instance;core.EndGame(core.GetPlayer(0).transform,baldi);}
             finally{Applying=false;}
         }
 
