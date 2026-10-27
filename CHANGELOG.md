@@ -4,6 +4,9 @@
 
 - Steam rooms only accept players who are in the host's Steam lobby. Anyone who knew the host's Steam ID could open a connection to it before. A caller who is not yet listed gets 5 s for the lobby list to catch up, then is turned away.
 - Random events stay with the host. A client's game no longer starts its own event timers, which run on their own random schedule (a challenge scene starts them as it loads). The host's time-limit challenge setting now reaches every player, so TimeOut matches.
+- Random events reach everyone: the host's event jingle and Baldi TV intro play for every player. Fog, the Mystery Room, the broken ruler and the after-hours TimeOut (rule break, dimming lights, music) now happen in every player's game, starting and ending with the host's. Other events stay with the host; their NPCs and doors already appear for everyone.
+- Lockdown doors (the event's walls and the lever-held doors on some floors) open and shut for everyone, and a teammate's lever press reaches the host.
+- Field trips: the Pitstop's trip room is picked from the run seed, so every player gets the same Pitstop. Before, two players could get different trips and the floor would fail to match.
 - Lab:
   - the repo can live outside the game folder (`scripts/paths.ps1`, `-bt-workspace`, `-bt-shared`);
   - lab copies start minimized as small titled windows that restore at the right edge, at low priority and quality (`scripts/lab-window.ps1`, `-bt-lab-light`);

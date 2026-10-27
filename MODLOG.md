@@ -1,5 +1,64 @@
 # Development journal
 
+## 2026-10-27: 0.9.2 second PC, Steam lobby gate, random events, field-trip pick, light lab windows
+
+**Request:** relayed from the user:
+- set Baldi Together up on a second PC with the repo outside the game folder;
+- rerun the soak and the full suite on a quiet machine;
+- review the Steam path against the coop-networking skill and the playbook page `networking-steam-spacewar`;
+- validate and sync challenges, Endless, field trips and random events;
+- keep lab copies out of the way: minimized, small, windowed, low priority;
+- don't stop to ask; skip anything that needs the desktop (the Alt+Tab test) and list it at the end.
+
+**Second PC:**
+- The repo lives in `Desktop/AIStuff/ai-work-pc-games/Baldi Multipplayer Mod`. `scripts/paths.ps1` finds the game folder.
+- The mod's lab paths were all `<game>/MultiplayerMod/...`. They now go through `Lab.Workspace` (`-bt-workspace`, default unchanged) and `Lab.Shared` (`-bt-shared`, the client's view of the host's command files): 75 paths in 26 files.
+- Restored `deps/` from the official BepInEx 5.4.23.5 and MelonLoader 0.7.3 releases. Installed BepInEx and the mod into the game. Rebuilt `private/melon-lab` as a plain copy.
+- Transport tests: 26/26, plus the no-keepalive mutant.
+
+**Quiet-PC suite (0.9.1 code, CPU about 12% idle):**
+- Everything passed with no retries: transport, 16 tours, LAN 15/15, NPC sync 15/15, core 14/14, encounter 45/45, soak 12/12, link 7/7 with the mutant caught, and all four shop runs.
+- Soak: worst mod cost 0.171 ms on the host and 0.21 ms on the client; worst frame p95 1.94 and 1.87 ms; heap drift -0.4 and -2.2 MB. This closes the "soak unverified" item.
+
+**Steam review** (coop-networking skill, playbook `networking-steam-spacewar`):
+- Already in place:
+  - lobbies with a mod key and a version check before connecting;
+  - rich presence `connect`, Join Game and `+connect_lobby`;
+  - `LobbyCreated` through a CallResult only (no double handling);
+  - reliable NoNagle messages under the size limits;
+  - a raised send buffer;
+  - connection-status callbacks plus transport keepalives;
+  - no migration in Steam rooms.
+- Gap: "only lobby members get through". The host accepted any SteamID's P2P call.
+- Fix: `SteamNet.Admit` accepts only members of the host's lobby. A caller not yet listed waits up to 5 s for Steam's member list, then is refused ("Not in this Steam room.").
+- Proof: `steam-lobby-gate` in steam-tour (17/17); the `-bt-lab-no-lobby-gate` mutant fails it (16/17).
+- Still open: a session between two real Steam accounts.
+
+**Random events** (research note in `private/notes/`):
+- Each copy builds the same seeded event list. Start order, gaps and durations come from `UnityEngine.Random`, so only the host may run them.
+- Step 1: `EnvironmentController.StartEventTimers` is a no-op on client worlds; a challenge scene calls it directly. `timeLimitChallenge` is now in the run state (protocol 15).
+  - Proof: `client_events_host_only` in core-live, passed; the `-ClientEvents` mutant fails it.
+- Step 2: the host sends each event's announcement, begin and end (`Op.EventState`, by list index and type). Clients play the jingle and the Baldi TV intro, and mirror Fog, Mystery Room, Snap (ruler) and TimeOut with their own end timer disabled. TimeOut on a client has no Baldi anger (the host's). Other events stay host-only; their NPC and door effects already replicate.
+  - Test: `launch-lab.ps1 -EventSync` with `tests/verify-events.py`; mutant `-NoEventSync`. EVENTSRESULT
+- Lockdown doors (event walls and lever obstacles) are now in the host door sync. Game buttons that drive world objects (not elevators, not manager functions) are forwarded to the host as interaction kind 4.
+- Late NPCs (Balder, student crowd): the research note thought they never reached clients. The host rebuilds its NPC list for every snapshot, and clients spawn missing replicas by index (`EnsureReplicaNpc`), so they do. Not yet confirmed in a lab run.
+
+**Field trips:** the Pitstop picks its trip hub with `UnityEngine.Random`, so two copies could build different Pitstops and fail the world match. The pick is now seeded from the run seed and the floor. Each player's own trip and its rewards stay local, as with the game's per-player bus pass.
+
+**Challenges and Endless:** not changed in this batch. Known co-op gaps:
+- a challenge win makes the host quit, which disconnects everyone;
+- Endless resets notebooks, but the mod's notebook model is one-time;
+- Endless item respawns are not in the shared catalog.
+Next batch, with a lab start path for each mode.
+
+**Lab windows:** `scripts/lab-window.ps1`:
+- copies start minimized, titled ("Baldi lab - host"), 480x270 windowed, at BelowNormal priority, with `-bt-lab-light` (quality 0, 60 FPS cap; the soak runs uncapped);
+- each window's restore spot is parked at the right edge;
+- placed once at launch, never touched again.
+- Proof: core-live 15/15 and steam-tour in minimized windows, plus the full suite (SUITE092).
+
+**Not done (needs the user):** the Alt+Tab focus test (sends keys to the desktop); a two-account Steam session; a playtest with friends.
+
 ## 2026-10-26: 0.9.1 glue sticks, late shop acks, lab startup race
 
 **Request:** relayed from the user ("tell each mod to continue its work on the game and its current progress"):
