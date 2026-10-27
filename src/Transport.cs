@@ -270,7 +270,7 @@ namespace BaldiTogether
         }
     }
 
-    public enum Op : byte { Hello = 1, Welcome, Roster, Start, Ready, ReadyAck, Pose, World, Interact, Leave, Ping, End, Begin, Pong, Reject, Notice, TeamPing, PickupRequest, PickupGrant, PickupAck, CatalogRequest, SupplyCatalog, HideRequest, HideState, ShopRequest, ShopGrant, ShopAck, PlayerStatus = 40, NpcCommand = 41, NpcReply = 42, PrincipalState = 43, PrincipalDetention = 44,RoundState=45,ElevatorRequest=46,MigrationPlan=50,MigrationResume=51,MigrationHello=52,VendingRequest=60,VendingReply=61,VendingAck=62,ResultsState=63,PlayerHud=64,BeansToClient=70,BeansToHost=71,CraftersToClient=72,CraftersToHost=73,PompToClient=74,PompToHost=75,TheTestToClient=76,TheTestToHost=77,ReflexToClient=78,ReflexToHost=79,ChalklesToClient=80,ChalklesToHost=81,ItemsToClient=82,ItemsToHost=83 }
+    public enum Op : byte { Hello = 1, Welcome, Roster, Start, Ready, ReadyAck, Pose, World, Interact, Leave, Ping, End, Begin, Pong, Reject, Notice, TeamPing, PickupRequest, PickupGrant, PickupAck, CatalogRequest, SupplyCatalog, HideRequest, HideState, ShopRequest, ShopGrant, ShopAck, PlayerStatus = 40, NpcCommand = 41, NpcReply = 42, PrincipalState = 43, PrincipalDetention = 44,RoundState=45,ElevatorRequest=46,MigrationPlan=50,MigrationResume=51,MigrationHello=52,VendingRequest=60,VendingReply=61,VendingAck=62,ResultsState=63,PlayerHud=64,BeansToClient=70,BeansToHost=71,CraftersToClient=72,CraftersToHost=73,PompToClient=74,PompToHost=75,TheTestToClient=76,TheTestToHost=77,ReflexToClient=78,ReflexToHost=79,ChalklesToClient=80,ChalklesToHost=81,ItemsToClient=82,ItemsToHost=83,EventState=84 }
 
     public static class Wire
     {

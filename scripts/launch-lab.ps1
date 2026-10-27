@@ -1,4 +1,4 @@
-param([switch]$TestActions, [switch]$SpriteTour, [switch]$FocusedSync, [switch]$FlowSync, [switch]$NpcSync, [switch]$LobbyTour, [switch]$LanTour, [switch]$Encounter, [switch]$Soak, [switch]$Profile, [switch]$Visible, [string]$Seed, [string]$Chaos, [int]$StallHost, [switch]$NoKeepAlive, [switch]$LateShopAck, [switch]$NoLateAck, [switch]$NoOwnGlue, [switch]$NoBuild, [switch]$Hidden, [switch]$ClientEvents)
+param([switch]$TestActions, [switch]$SpriteTour, [switch]$FocusedSync, [switch]$FlowSync, [switch]$NpcSync, [switch]$LobbyTour, [switch]$LanTour, [switch]$Encounter, [switch]$Soak, [switch]$Profile, [switch]$Visible, [string]$Seed, [string]$Chaos, [int]$StallHost, [switch]$NoKeepAlive, [switch]$LateShopAck, [switch]$NoLateAck, [switch]$NoOwnGlue, [switch]$NoBuild, [switch]$Hidden, [switch]$ClientEvents, [switch]$EventSync, [switch]$NoEventSync)
 # -NoBuild installs the DLLs already in artifacts/ (for example an older release, for an A/B run) instead of rebuilding.
 # By default both copies start minimized as small titled windows that restore at the right edge (scripts/lab-window.ps1); -Hidden hides them.
 # -Visible shows both windows (needed for focus and Alt+Tab tests; focus cannot move to a hidden window).
@@ -95,6 +95,9 @@ if ($LateShopAck) { $clientArgs += @('-bt-lab-delay-shop-ack','15') }
 if ($NoLateAck) { $hostArgs += '-bt-lab-no-late-ack' }
 if ($NoOwnGlue) { $hostArgs += '-bt-lab-no-own-glue'; $clientArgs += '-bt-lab-no-own-glue' } # mutant: host-priced glue stick for everyone
 if ($NoKeepAlive) { $hostArgs += '-bt-lab-no-keepalive'; $clientArgs += '-bt-lab-no-keepalive' } # mutation run: 0.8.x link liveness
+# -EventSync: both copies add the same fog event; the host runs it for 6 s and the client must mirror it (tests/verify-events.py).
+if ($EventSync) { $hostArgs += '-bt-event-sync'; $clientArgs += '-bt-event-sync' }
+if ($NoEventSync) { $hostArgs += '-bt-lab-no-event-sync' } # mutant: the host sends no event states
 if ($ClientEvents) { $clientArgs += '-bt-lab-client-events' } # mutant: the client may start its own random-event timers
 if ($Seed) { $hostArgs += @('-bt-seed', $Seed) } # the host's run seed (lab); clients always take the host's
 $hostArgs += $workspaceArgs; $clientArgs += $sharedArgs
