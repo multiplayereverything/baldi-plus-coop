@@ -3,14 +3,14 @@
 # Builds both loaders, runs the transport checks, every single-process tour on the BepInEx copy,
 # then the two-process LAN join test (BepInEx host + MelonLoader client). Only test-owned processes are stopped.
 $ErrorActionPreference = 'Stop'
-$modRoot = Split-Path $PSScriptRoot -Parent
+. (Join-Path $PSScriptRoot 'paths.ps1')
 $python = Join-Path $modRoot '.venv/Scripts/python.exe'
 if (Get-Process BALDI -ErrorAction SilentlyContinue) { throw 'Close Baldi before running the lab suite.' }
 $failed = @()
 
 & (Join-Path $PSScriptRoot 'build.ps1')
 & (Join-Path $PSScriptRoot 'test.ps1') | Select-Object -Last 1
-Copy-Item (Join-Path $modRoot 'artifacts/BepInEx/BaldiTogether.BepInEx.dll') (Join-Path (Split-Path $modRoot -Parent) 'BepInEx/plugins/BaldiTogether/BaldiTogether.BepInEx.dll') -Force
+Copy-Item (Join-Path $modRoot 'artifacts/BepInEx/BaldiTogether.BepInEx.dll') (Join-Path $gameRoot 'BepInEx/plugins/BaldiTogether/BaldiTogether.BepInEx.dll') -Force
 
 $tours = @(@('lobby-tour','lobby-results.json'), @('spectator-tour','spectator-results.json'), @('hideseek-audio-tour','hideseek-audio-results.json'),
     @('spectator-ui-tour','spectator-ui-results.json'), @('beans-tour','beans-results.json'), @('crafters-tour','crafters-results.json'),

@@ -3,8 +3,7 @@ param([int]$AwaySeconds = 25)
 # and logs). The host starts a run; then focus moves to the client window (Alt+Tab) for -AwaySeconds and the host is
 # also minimized, then restored. Prints both sides' link messages. Only test-owned processes are stopped.
 $ErrorActionPreference = 'Stop'
-$modRoot = Split-Path $PSScriptRoot -Parent
-$gameRoot = Split-Path $modRoot -Parent
+. (Join-Path $PSScriptRoot 'paths.ps1')
 Add-Type @'
 using System; using System.Runtime.InteropServices;
 public static class SameWin {
@@ -16,7 +15,7 @@ public static class SameWin {
 }
 '@
 $hostLog = Join-Path $modRoot 'private/same-host.log'; $clientLog = Join-Path $modRoot 'private/same-client.log'
-$common = @('-bt-diagnostics', '-bt-lab', '-bt-soak') # soak keeps the run alive (catches suppressed)
+$common = @('-bt-diagnostics', '-bt-lab', '-bt-soak') + $workspaceArgs # soak keeps the run alive (catches suppressed)
 $hostProcess = Start-Process -FilePath (Join-Path $gameRoot 'BALDI.exe') -ArgumentList (@('-logFile', ('"' + $hostLog + '"'), '-bt-host', '-bt-auto-start', '-bt-name', 'Tu') + $common) -PassThru
 Start-Sleep -Seconds 3 # two instances from one folder cannot start in the same instant
 $clientProcess = Start-Process -FilePath (Join-Path $gameRoot 'BALDI.exe') -ArgumentList (@('-logFile', ('"' + $clientLog + '"'), '-bt-join', '127.0.0.1', '-bt-name', 'Ford') + $common) -PassThru

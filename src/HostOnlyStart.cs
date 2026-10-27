@@ -103,9 +103,9 @@ namespace BaldiTogether
                     lines.Add("   text key=" + t.textKey + " => " + Singleton<LocalizationManager>.Instance.GetLocalizedText(t.textKey).Replace('\n', ' ') + " pos=" + t.position.x + "," + t.position.z + " size=" + t.size.x + "," + t.size.z
                         + " font=" + (t.font == null ? "null" : t.font.name) + " fontSize=" + t.fontSize + " colour=" + t.color + " style=" + t.style + " align=" + t.alignment);
                 if (poster.baseTexture != null && poster.baseTexture.isReadable && npc.name == "FirstPrize")
-                    File.WriteAllBytes(Path.Combine(Root, "MultiplayerMod/private/poster-reference-firstprize.png"), poster.baseTexture.EncodeToPNG());
+                    File.WriteAllBytes(Path.Combine(Lab.Workspace, "private/poster-reference-firstprize.png"), poster.baseTexture.EncodeToPNG());
             }
-            File.WriteAllLines(Path.Combine(Root, "MultiplayerMod/artifacts/tests/menu-dump.txt"), lines.ToArray());
+            File.WriteAllLines(Path.Combine(Lab.Workspace, "artifacts/tests/menu-dump.txt"), lines.ToArray());
             Log("LAB menu dump: " + lines.Count + " lines");
         }
 

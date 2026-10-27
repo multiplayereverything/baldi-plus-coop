@@ -1,10 +1,11 @@
-param([switch]$TestActions, [switch]$SpriteTour, [switch]$FocusedSync, [switch]$FlowSync, [switch]$NpcSync, [switch]$LobbyTour, [switch]$LanTour, [switch]$Encounter, [switch]$Soak, [switch]$Profile, [switch]$Visible, [string]$Seed, [string]$Chaos, [int]$StallHost, [switch]$NoKeepAlive, [switch]$LateShopAck, [switch]$NoLateAck, [switch]$NoOwnGlue, [switch]$NoBuild)
+param([switch]$TestActions, [switch]$SpriteTour, [switch]$FocusedSync, [switch]$FlowSync, [switch]$NpcSync, [switch]$LobbyTour, [switch]$LanTour, [switch]$Encounter, [switch]$Soak, [switch]$Profile, [switch]$Visible, [string]$Seed, [string]$Chaos, [int]$StallHost, [switch]$NoKeepAlive, [switch]$LateShopAck, [switch]$NoLateAck, [switch]$NoOwnGlue, [switch]$NoBuild, [switch]$Hidden, [switch]$ClientEvents)
 # -NoBuild installs the DLLs already in artifacts/ (for example an older release, for an A/B run) instead of rebuilding.
+# By default both copies start minimized as small titled windows that restore at the right edge (scripts/lab-window.ps1); -Hidden hides them.
 # -Visible shows both windows (needed for focus and Alt+Tab tests; focus cannot move to a hidden window).
 $windowStyle = if ($Visible) { 'Normal' } else { 'Hidden' }
 $ErrorActionPreference = 'Stop'
-$modRoot = Split-Path $PSScriptRoot -Parent
-$gameRoot = Split-Path $modRoot -Parent
+. (Join-Path $PSScriptRoot 'paths.ps1')
+. (Join-Path $PSScriptRoot 'lab-window.ps1')
 $labRoot = Join-Path $modRoot 'private/melon-lab'
 if (!(Test-Path -LiteralPath (Join-Path $labRoot 'BALDI.exe'))) { throw 'Create the private MelonLoader lab first. See MODLOG.md.' }
 foreach ($name in @('host','client')) {
@@ -46,8 +47,9 @@ if ($NpcSync) {
 }
 if ($LobbyTour) {
     # Single BepInEx process: synthetic peers exercise sounds, colours, spectator HUD and LAN parsing.
-    $hostArgs = @('-logFile',('"'+$hostLog+'"'),'-bt-name','Host','-bt-diagnostics','-bt-lab','-bt-lobby-tour')
-    $hostProcess = Start-Process -FilePath (Join-Path $gameRoot 'BALDI.exe') -ArgumentList $hostArgs -WindowStyle $windowStyle -PassThru
+    $hostArgs = @('-logFile',('"'+$hostLog+'"'),'-bt-name','Host','-bt-diagnostics','-bt-lab','-bt-lobby-tour') + $workspaceArgs
+    if ($Visible) { $hostProcess = Start-Process -FilePath (Join-Path $gameRoot 'BALDI.exe') -ArgumentList $hostArgs -WindowStyle $windowStyle -PassThru }
+    else { $hostProcess = Start-LabGame -FilePath (Join-Path $gameRoot 'BALDI.exe') -ArgumentList $hostArgs -Slot 0 -Title 'Baldi lab - lobby tour' -Hidden:$Hidden }
     $hostProcess.Id | Set-Content (Join-Path $modRoot 'private/host-pid.txt')
     Write-Output "Lobby tour PID $($hostProcess.Id)"
     return
@@ -93,9 +95,16 @@ if ($LateShopAck) { $clientArgs += @('-bt-lab-delay-shop-ack','15') }
 if ($NoLateAck) { $hostArgs += '-bt-lab-no-late-ack' }
 if ($NoOwnGlue) { $hostArgs += '-bt-lab-no-own-glue'; $clientArgs += '-bt-lab-no-own-glue' } # mutant: host-priced glue stick for everyone
 if ($NoKeepAlive) { $hostArgs += '-bt-lab-no-keepalive'; $clientArgs += '-bt-lab-no-keepalive' } # mutation run: 0.8.x link liveness
+if ($ClientEvents) { $clientArgs += '-bt-lab-client-events' } # mutant: the client may start its own random-event timers
 if ($Seed) { $hostArgs += @('-bt-seed', $Seed) } # the host's run seed (lab); clients always take the host's
-$hostProcess = Start-Process -FilePath (Join-Path $gameRoot 'BALDI.exe') -ArgumentList $hostArgs -WindowStyle $windowStyle -PassThru
+$hostArgs += $workspaceArgs; $clientArgs += $sharedArgs
+if ($Soak) { $hostArgs += '-bt-lab-uncapped'; $clientArgs += '-bt-lab-uncapped' } # the soak measures frame time
+if ($Visible) {
+    $hostProcess = Start-Process -FilePath (Join-Path $gameRoot 'BALDI.exe') -ArgumentList $hostArgs -WindowStyle $windowStyle -PassThru
+} else { $hostProcess = Start-LabGame -FilePath (Join-Path $gameRoot 'BALDI.exe') -ArgumentList $hostArgs -Slot 0 -Title 'Baldi lab - host' -Hidden:$Hidden }
 $hostProcess.Id | Set-Content (Join-Path $modRoot 'private/host-pid.txt')
-$clientProcess = Start-Process -FilePath (Join-Path $labRoot 'BALDI.exe') -WorkingDirectory $labRoot -ArgumentList $clientArgs -WindowStyle $windowStyle -PassThru
+if ($Visible) {
+    $clientProcess = Start-Process -FilePath (Join-Path $labRoot 'BALDI.exe') -WorkingDirectory $labRoot -ArgumentList $clientArgs -WindowStyle $windowStyle -PassThru
+} else { $clientProcess = Start-LabGame -FilePath (Join-Path $labRoot 'BALDI.exe') -WorkingDirectory $labRoot -ArgumentList $clientArgs -Slot 1 -Title 'Baldi lab - client' -Hidden:$Hidden }
 $clientProcess.Id | Set-Content (Join-Path $modRoot 'private/client-pid.txt')
 Write-Output "Host PID $($hostProcess.Id), Melon client PID $($clientProcess.Id)"

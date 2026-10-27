@@ -153,7 +153,7 @@ namespace BaldiTogether
             ackPacket(3,10000,false);checks["duplicate-ack-no-double-refund"]=VendField<int>(machine,"usesLeft")==1;
             Network.Dispose();Network=oldNetwork;worldReady=oldReady;vendingRequests.Remove(3);
             vending.Remove("lab-vending");Object.Destroy(go);Object.Destroy(quarter);
-            var path=Path.Combine(Root,"MultiplayerMod/artifacts/tests/vending-results.json");Directory.CreateDirectory(Path.GetDirectoryName(path));
+            var path=Path.Combine(Lab.Workspace,"artifacts/tests/vending-results.json");Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path,"{\"passed\":"+checks.Count(p=>p.Value)+",\"failed\":"+checks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",checks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}");
         }
         System.Collections.IEnumerator TourNativeVending()
@@ -184,7 +184,7 @@ namespace BaldiTogether
             if(token!=0){reply();checks["recipient-quarter-consumed"]=!inventory.items.Any(i=>i.itemType==Items.Quarter);checks["recipient-reward-once"]=inventory.items.Count(i=>i.itemType==Items.Bsoda)==1;reply();checks["duplicate-grant-no-extra-reward"]=inventory.items.Count(i=>i.itemType==Items.Bsoda)==1;}
             else{checks["recipient-quarter-consumed"]=false;checks["recipient-reward-once"]=false;checks["duplicate-grant-no-extra-reward"]=false;}
             vending.Remove("native-vend-lab");vendingRequests.Remove(3);if(token!=0)vendingDeliveries.Remove(token);Object.Destroy(go);
-            var path=Path.Combine(Root,"MultiplayerMod/artifacts/tests/vending-native-results.json");Directory.CreateDirectory(Path.GetDirectoryName(path));
+            var path=Path.Combine(Lab.Workspace,"artifacts/tests/vending-native-results.json");Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path,"{\"passed\":"+checks.Count(p=>p.Value)+",\"failed\":"+checks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",checks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}");
         }
     }

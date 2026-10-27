@@ -20,7 +20,13 @@ namespace BaldiTogether
         readonly IntPtr[] incoming = new IntPtr[64];
         Callback<SteamNetConnectionStatusChangedCallback_t> statusCallback;
         bool disposed;
-        public int Received, Sent;
+        public int Received, Sent, Refused;
+        // Host only: who may connect. Anyone who knows the host's SteamID can call its listen socket, so only
+        // members of the host's lobby get in. Membership can reach the host a moment after the joiner's call,
+        // so a stranger is held for up to 5 s before being refused.
+        public Func<CSteamID, bool> Admit;
+        const int AdmitWaitMs = 5000;
+        readonly Dictionary<HSteamNetConnection, KeyValuePair<CSteamID, int>> waiting = new Dictionary<HSteamNetConnection, KeyValuePair<CSteamID, int>>();
 
         static bool bufferSet;
 
@@ -93,11 +99,11 @@ namespace BaldiTogether
             if (state == ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connecting)
             {
                 // a friend calling the host's listen socket
-                if (!known && hosting && listen != HSteamListenSocket.Invalid && status.m_info.m_hListenSocket == listen)
+                if (!known && hosting && listen != HSteamListenSocket.Invalid && status.m_info.m_hListenSocket == listen && !waiting.ContainsKey(connection))
                 {
-                    if (links.Count >= 3 || SteamNetworkingSockets.AcceptConnection(connection) != EResult.k_EResultOK)
-                    { SteamNetworkingSockets.CloseConnection(connection, 0, "Room is full.", false); return; }
-                    Track(connection, true);
+                    var caller = status.m_info.m_identityRemote.GetSteamID();
+                    if (Admit == null || Admit(caller)) Accept(connection);
+                    else waiting[connection] = new KeyValuePair<CSteamID, int>(caller, Environment.TickCount + AdmitWaitMs);
                 }
             }
             else if (state == ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connected)
@@ -107,7 +113,8 @@ namespace BaldiTogether
             else if (state == ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ClosedByPeer
                 || state == ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ProblemDetectedLocally)
             {
-                if (known)
+                if (waiting.Remove(connection)) SteamNetworkingSockets.CloseConnection(connection, 0, null, false);
+                else if (known)
                 {
                     links.Remove(connection);
                     if (link.Id >= 0) owner.ExternalClosed(link.Id, link);
@@ -117,9 +124,30 @@ namespace BaldiTogether
             }
         }
 
+        void Accept(HSteamNetConnection connection)
+        {
+            if (links.Count >= 3 || SteamNetworkingSockets.AcceptConnection(connection) != EResult.k_EResultOK)
+            { SteamNetworkingSockets.CloseConnection(connection, 0, "Room is full.", false); return; }
+            Track(connection, true);
+        }
+
+        void AdmitWaiting()
+        {
+            foreach (var entry in new List<KeyValuePair<HSteamNetConnection, KeyValuePair<CSteamID, int>>>(waiting))
+            {
+                if (Admit(entry.Value.Key)) { waiting.Remove(entry.Key); Accept(entry.Key); }
+                else if (Environment.TickCount - entry.Value.Value >= 0)
+                {
+                    waiting.Remove(entry.Key); Refused++;
+                    SteamNetworkingSockets.CloseConnection(entry.Key, 0, "Not in this Steam room.", false);
+                }
+            }
+        }
+
         // Main thread, every frame: move received messages into the Transport's event queue.
         public void Pump()
         {
+            if (waiting.Count > 0) AdmitWaiting();
             if (disposed) return;
             for (int round = 0; round < 8; round++)
             {

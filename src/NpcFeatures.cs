@@ -108,7 +108,7 @@ namespace BaldiTogether
 
         string NpcFeatureDiagnostic()
         {
-            return BeansDiagnostic() + CraftersDiagnostic() + PompDiagnostic() + TheTestDiagnostic() + ReflexDiagnostic() + ChalklesDiagnostic() + ItemsDiagnostic() + HallMonitorDiagnostic() + HostOnlyStartDiagnostic() + EncounterDiagnostic();
+            return BeansDiagnostic() + CraftersDiagnostic() + PompDiagnostic() + TheTestDiagnostic() + ReflexDiagnostic() + ChalklesDiagnostic() + ItemsDiagnostic() + HallMonitorDiagnostic() + HostOnlyStartDiagnostic() + EncounterDiagnostic() + EventDiagnostic();
         }
 
         void UpdateNpcFeatureLabs()

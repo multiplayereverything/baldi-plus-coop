@@ -313,7 +313,7 @@ namespace BaldiTogether
                 LabFace(player, wallPoint);
                 yield return new WaitForSecondsRealtime(0.5f);
                 Log("LAB poster room shot: " + (spot - posterCell.CenterWorldPosition).magnitude.ToString("0") + " units from his wall cell");
-                QueueScreenshot(Path.Combine(Root, "MultiplayerMod/artifacts/tests/hall-monitor-poster-room.png"));
+                QueueScreenshot(Path.Combine(Lab.Workspace, "artifacts/tests/hall-monitor-poster-room.png"));
                 yield return new WaitForSecondsRealtime(0.5f);
             }
 
@@ -330,7 +330,7 @@ namespace BaldiTogether
                 player.Teleport(ClearWorldLine(wallCell.CenterWorldPosition + Vector3.up, view + Vector3.up) ? view : wallCell.CenterWorldPosition);
                 LabFace(player, wallCell.CenterWorldPosition + wallDir.ToVector3() * 5);
                 yield return new WaitForSecondsRealtime(0.5f);
-                QueueScreenshot(Path.Combine(Root, "MultiplayerMod/artifacts/tests/hall-monitor-poster-ingame.png"));
+                QueueScreenshot(Path.Combine(Lab.Workspace, "artifacts/tests/hall-monitor-poster-ingame.png"));
                 yield return new WaitForSecondsRealtime(0.5f);
             }
             CheckNativeUi("hm-poster-built-on-wall-with-text", built);
@@ -360,7 +360,7 @@ namespace BaldiTogether
             Vector3 face = open == Vector3.zero ? Vector3.forward : open;
             player.Teleport(origin + face * 8); LabFace(player, monitor.transform.position);
             yield return new WaitForSecondsRealtime(0.5f);
-            QueueScreenshot(Path.Combine(Root, "MultiplayerMod/artifacts/tests/hall-monitor-patrol.png"));
+            QueueScreenshot(Path.Combine(Lab.Workspace, "artifacts/tests/hall-monitor-patrol.png"));
             yield return new WaitForSecondsRealtime(0.5f);
             float now = Time.realtimeSinceStartup;
             var runner = new Peer { Id = 3, Name = "Runner", Accepted = true, Ready = true, HasPose = true, Position = origin + open * 8, PoseAt = now };
@@ -422,7 +422,7 @@ namespace BaldiTogether
             CheckNativeUi("hm-whistle-points-baldi-at-pair", focus > 9 && focused != null && (focused.Id == self || focused.Id == 3) && unfocused != null && unfocused.Id == 5);
             player.Teleport(origin + face * 8); LabFace(player, monitor.transform.position);
             yield return new WaitForSecondsRealtime(0.3f);
-            QueueScreenshot(Path.Combine(Root, "MultiplayerMod/artifacts/tests/hall-monitor-whistle.png"));
+            QueueScreenshot(Path.Combine(Lab.Workspace, "artifacts/tests/hall-monitor-whistle.png"));
             yield return new WaitForSecondsRealtime(0.5f);
             hallMarks[3] = HallMonitor.MarkSeconds; hallMarks[self] = HallMonitor.MarkSeconds; freshen();
             CheckHallWhistle(monitor);

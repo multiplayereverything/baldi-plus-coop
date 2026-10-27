@@ -169,7 +169,7 @@ namespace BaldiTogether
             checks["host-remains-dead-before-next-round"] = LocalEliminated;
             string json = "{\"passed\":" + checks.Count(p => p.Value) + ",\"failed\":" + checks.Count(p => !p.Value) + ",\"checks\":{" +
                 string.Join(",", checks.Select(p => "\"" + p.Key + "\":" + p.Value.ToString().ToLowerInvariant()).ToArray()) + "}}";
-            string folder = Path.Combine(Root, "MultiplayerMod/artifacts/tests"); Directory.CreateDirectory(folder);
+            string folder = Path.Combine(Lab.Workspace, "artifacts/tests"); Directory.CreateDirectory(folder);
             File.WriteAllText(Path.Combine(folder, "remote-elevator-results.json"), json); Log("LAB remote elevator " + json);
         }
     }

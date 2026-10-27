@@ -89,7 +89,7 @@ namespace BaldiTogether
                 }
             }
             string json="{\"passed\":"+checks.Count(p=>p.Value)+",\"failed\":"+checks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",checks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            string path=Path.Combine(Root,"MultiplayerMod/artifacts/tests/contact-results.json");Directory.CreateDirectory(Path.GetDirectoryName(path));File.WriteAllText(path,json);Log("LAB contacts "+json);
+            string path=Path.Combine(Lab.Workspace,"artifacts/tests/contact-results.json");Directory.CreateDirectory(Path.GetDirectoryName(path));File.WriteAllText(path,json);Log("LAB contacts "+json);
         }
     }
 }

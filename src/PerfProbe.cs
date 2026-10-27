@@ -91,7 +91,7 @@ namespace BaldiTogether
         {
             try
             {
-                string folder = Path.Combine(TogetherRuntime.Root, "MultiplayerMod/artifacts/tests");
+                string folder = Path.Combine(Lab.Workspace, "artifacts/tests");
                 Directory.CreateDirectory(folder);
                 string role = runtime.Hosting ? "host" : "client";
                 File.WriteAllText(Path.Combine(folder, "perf-" + role + ".json"),

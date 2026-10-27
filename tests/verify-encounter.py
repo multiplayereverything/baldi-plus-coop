@@ -13,7 +13,16 @@ import time
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-game = root.parent
+def find_game(repo):
+    # Same order as scripts/paths.ps1: BT_GAME_ROOT, a folder above the repo with BALDI.exe, the default Steam install.
+    import os
+    if os.environ.get("BT_GAME_ROOT"):
+        return Path(os.environ["BT_GAME_ROOT"])
+    for folder in repo.parents:
+        if (folder / "BALDI.exe").exists():
+            return folder
+    return Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "Steam/steamapps/common/Baldi's Basics Plus"
+game = find_game(root)
 tests = root / "artifacts/tests"
 lab = root / "private/melon-lab"
 host_path = tests / "encounter-host.json"

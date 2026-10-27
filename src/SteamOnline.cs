@@ -70,7 +70,7 @@ namespace BaldiTogether
             if (host)
             {
                 Network = new Transport();
-                steamOwner = Network; steamNet = new SteamNet(Network, true); steamNet.Listen();
+                steamOwner = Network; steamNet = new SteamNet(Network, true) { Admit = SteamMember }; steamNet.Listen();
                 self = 0;
                 peers[0] = new Peer { Id = 0, Name = Name, Accepted = true, ModVersion = ModVersion, GameHash = gameHash, Colour = PlayerColour };
                 lobbyCreated.Set(SteamMatchmaking.CreateLobby(OnlinePublic ? ELobbyType.k_ELobbyTypePublic : ELobbyType.k_ELobbyTypeFriendsOnly, 4));
@@ -240,6 +240,16 @@ namespace BaldiTogether
             NativeText("steam-list-status", rooms.Length == 0 ? steamListStatus : "Pick a room to join.", 0, rooms.Length == 0 ? 40 : -64, 440, 40, 13, TextAlignmentOptions.Center);
             NativeChoice("steam-refresh", "REFRESH", 0, -112, 260, 20, delegate { FetchSteamRooms(); BuildNativeMenu(); });
             NativeChoice("back", "BACK", 0, -147, 260, 24, NativeBack);
+        }
+
+        // Only members of this host's lobby may open a Steam link to it. -bt-lab-no-lobby-gate is the mutation twin.
+        bool SteamMember(CSteamID id)
+        {
+            if (Lab.Enabled && Lab.HasArg("-bt-lab-no-lobby-gate")) return true;
+            if (!steamLobby.IsValid()) return false;
+            int count = SteamMatchmaking.GetNumLobbyMembers(steamLobby);
+            for (int i = 0; i < count; i++) if (SteamMatchmaking.GetLobbyMemberByIndex(steamLobby, i) == id) return true;
+            return false;
         }
 
         string SteamSignature() { return Online + ":" + steamLobby.m_SteamID + ":" + (nativePage == SteamListPage ? steamListRevision + steamListStatus : ""); }

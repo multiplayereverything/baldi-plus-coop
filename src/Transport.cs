@@ -274,7 +274,7 @@ namespace BaldiTogether
 
     public static class Wire
     {
-        public const int Version = 14; // 14: keepalive frames
+        public const int Version = 15; // 14: keepalive frames; 15: time-limit challenge in the run state
         public static byte[] Packet(Op op, Action<BinaryWriter> write)
         {
             using (MemoryStream memory = new MemoryStream())

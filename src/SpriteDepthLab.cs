@@ -32,7 +32,7 @@ namespace BaldiTogether
                 foreach(var cam in new[]{gameCamera.camCom,gameCamera.billboardCam})if(cam!=null)
                 {report.AppendLine("CAM "+cam.name+" mask="+cam.cullingMask+" clear="+cam.clearFlags);foreach(var component in cam.GetComponents<Component>())if(component!=null&&component.GetType().Name=="UniversalAdditionalCameraData") {var prop=component.GetType().GetProperty("clearDepth");report.AppendLine("URP clearDepth="+(prop==null?"?":prop.GetValue(component,null).ToString()));}}
             }
-            File.WriteAllText(Path.Combine(Root,"MultiplayerMod/private/sprite-materials.txt"),report.ToString());
+            File.WriteAllText(Path.Combine(Lab.Workspace,"private/sprite-materials.txt"),report.ToString());
             Log("SPRITE DEPTH: material inspection saved.");
             if(Lab.HasArg("-bt-sprite-stack"))RunSpriteStackDepthCheck();else RunSpriteDepthCheck();
         }
@@ -54,7 +54,7 @@ namespace BaldiTogether
             var overlayObject=new GameObject("Stack test billboard camera",typeof(Camera));var overlay=overlayObject.GetComponent<Camera>();overlay.CopyFrom(main);overlay.enabled=false;overlay.transform.SetPositionAndRotation(main.transform.position,main.transform.rotation);
             overlay.cullingMask=rig.billboardCam.cullingMask;overlay.clearFlags=rig.billboardCam.clearFlags;
             var target=new RenderTexture(256,256,24);main.targetTexture=overlay.targetTexture=target;
-            string directory=Path.Combine(Root,"MultiplayerMod/private/captures");Directory.CreateDirectory(directory);
+            string directory=Path.Combine(Lab.Workspace,"private/captures");Directory.CreateDirectory(directory);
             var checks=new System.Collections.Generic.Dictionary<string,bool>();
             checks["native-camera-routing"]=player.gameObject.layer==source.gameObject.layer&&(main.cullingMask&(1<<player.gameObject.layer))==0&&(overlay.cullingMask&(1<<player.gameObject.layer))!=0;
             try
@@ -81,7 +81,7 @@ namespace BaldiTogether
                     Log("STACK "+prefix+" front="+front+" pixels="+correct+"/"+overlap+" holes="+clear+"/"+holes);
                 }
                 int passed=checks.Count(p=>p.Value);string json="{\"passed\":"+passed+",\"failed\":"+(checks.Count-passed)+",\"checks\":{"+string.Join(",",checks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-                string tests=Path.Combine(Root,"MultiplayerMod/artifacts/tests");Directory.CreateDirectory(tests);File.WriteAllText(Path.Combine(tests,"sprite-stack-results.json"),json);Log("STACK results "+json);
+                string tests=Path.Combine(Lab.Workspace,"artifacts/tests");Directory.CreateDirectory(tests);File.WriteAllText(Path.Combine(tests,"sprite-stack-results.json"),json);Log("STACK results "+json);
             }
             finally {main.targetTexture=overlay.targetTexture=null;target.Release();Destroy(target);Destroy(avatar);Destroy(npcObject);Destroy(mainObject);Destroy(overlayObject);Destroy(playerMaterial);Destroy(npcMaterial);}
         }
@@ -109,7 +109,7 @@ namespace BaldiTogether
             var a=new GameObject("Player test",typeof(SpriteRenderer));a.layer=30;var player=a.GetComponent<SpriteRenderer>();player.sprite=PlayerSpriteSheet.Sprites[0];
             var b=new GameObject("Baldi test",typeof(SpriteRenderer));b.layer=30;var npc=b.GetComponent<SpriteRenderer>();npc.sprite=source.sprite;npc.sharedMaterial=npcMaterial;
             player.sortingLayerID=npc.sortingLayerID=source.sortingLayerID;player.sortingOrder=npc.sortingOrder=source.sortingOrder;
-            string directory=Path.Combine(Root,"MultiplayerMod/private/captures");Directory.CreateDirectory(directory);
+            string directory=Path.Combine(Lab.Workspace,"private/captures");Directory.CreateDirectory(directory);
             var results=new System.Collections.Generic.Dictionary<string,bool>();
             try
             {
@@ -137,10 +137,10 @@ namespace BaldiTogether
                     Log("DEPTH "+prefix+": overlap="+overlap+" NPC="+npcCorrect+" player="+playerCorrect+" holes="+holesCorrect+"/"+holes+" shader="+player.sharedMaterial.shader.name);
                 }
                 string json="{"+string.Join(",",results.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}";
-                File.WriteAllText(Path.Combine(Root,"MultiplayerMod/private/depth-comparison.json"),json);Log("DEPTH comparison "+json);
+                File.WriteAllText(Path.Combine(Lab.Workspace,"private/depth-comparison.json"),json);Log("DEPTH comparison "+json);
                 bool regression=!results["default-player-front"];
                 int passed=(regression?1:0)+results.Count(p=>p.Key.StartsWith("native-")&&p.Value);
-                string tests=Path.Combine(Root,"MultiplayerMod/artifacts/tests");Directory.CreateDirectory(tests);
+                string tests=Path.Combine(Lab.Workspace,"artifacts/tests");Directory.CreateDirectory(tests);
                 File.WriteAllText(Path.Combine(tests,"depth-results.json"),"{\"passed\":"+passed+",\"failed\":"+(4-passed)+",\"legacyRegressionReproduced\":"+regression.ToString().ToLowerInvariant()+",\"checks\":"+json+"}");
             }
             finally {camera.targetTexture=null;target.Release();Destroy(target);Destroy(a);Destroy(b);Destroy(cameraObject);Destroy(candidate);Destroy(npcMaterial);Destroy(legacy);}

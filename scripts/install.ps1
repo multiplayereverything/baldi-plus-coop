@@ -1,7 +1,7 @@
 param([ValidateSet('BepInEx','MelonLoader')][string]$Loader = 'BepInEx', [string]$GameRoot)
 $ErrorActionPreference = 'Stop'
 $modRoot = Split-Path $PSScriptRoot -Parent
-if (!$GameRoot) { $GameRoot = Split-Path $modRoot -Parent }
+if (!$GameRoot) { . (Join-Path $PSScriptRoot 'paths.ps1') } # sets $gameRoot (the same variable)
 $GameRoot = [IO.Path]::GetFullPath($GameRoot)
 if (!(Test-Path -LiteralPath (Join-Path $GameRoot 'BALDI.exe'))) { throw 'Target must contain BALDI.exe.' }
 if (Get-Process BALDI -ErrorAction SilentlyContinue) { throw 'Close Baldi before installing or switching loaders.' }

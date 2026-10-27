@@ -59,7 +59,7 @@ namespace BaldiTogether
             yield return new WaitForSecondsRealtime(3);
             FocusEvent("READY " + FocusState());
             yield return FocusShot("focus-before.png");
-            string ready = Path.Combine(Root, "MultiplayerMod/private/focus-ready.txt"), done = Path.Combine(Root, "MultiplayerMod/private/focus-done.txt");
+            string ready = Path.Combine(Lab.Workspace, "private/focus-ready.txt"), done = Path.Combine(Lab.Workspace, "private/focus-done.txt");
             File.WriteAllText(ready, System.Diagnostics.Process.GetCurrentProcess().Id.ToString());
             float until = Time.realtimeSinceStartup + 90, nextState = 0;
             while (!File.Exists(done) && Time.realtimeSinceStartup < until)
@@ -70,15 +70,15 @@ namespace BaldiTogether
             yield return new WaitForSecondsRealtime(2);
             FocusEvent("AFTER " + FocusState());
             yield return FocusShot("focus-after.png");
-            File.WriteAllLines(Path.Combine(Root, "MultiplayerMod/artifacts/tests/focus-events.txt"), focusEvents.ToArray());
-            File.WriteAllText(Path.Combine(Root, "MultiplayerMod/artifacts/tests/focus-results.json"), "{\"done\":true,\"events\":" + focusEvents.Count + "}");
+            File.WriteAllLines(Path.Combine(Lab.Workspace, "artifacts/tests/focus-events.txt"), focusEvents.ToArray());
+            File.WriteAllText(Path.Combine(Lab.Workspace, "artifacts/tests/focus-results.json"), "{\"done\":true,\"events\":" + focusEvents.Count + "}");
         }
 
         IEnumerator FocusShot(string name)
         {
             yield return new WaitForEndOfFrame();
             var shot = ScreenCapture.CaptureScreenshotAsTexture();
-            File.WriteAllBytes(Path.Combine(Root, "MultiplayerMod/artifacts/tests/" + name), shot.EncodeToPNG());
+            File.WriteAllBytes(Path.Combine(Lab.Workspace, "artifacts/tests/" + name), shot.EncodeToPNG());
             Object.Destroy(shot);
         }
     }

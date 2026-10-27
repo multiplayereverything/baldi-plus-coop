@@ -411,7 +411,7 @@ namespace BaldiTogether
             bool quorum = !promoted || peers.Values.Count(p => p.Accepted) == 2;
             bool[] checks = { role, term, identity, dead, quorum };
             int passed = checks.Count(c => c);
-            string folder = Path.Combine(Root, "MultiplayerMod/artifacts/tests"); Directory.CreateDirectory(folder);
+            string folder = Path.Combine(Lab.Workspace, "artifacts/tests"); Directory.CreateDirectory(folder);
             File.WriteAllText(Path.Combine(folder, "migration-" + System.Diagnostics.Process.GetCurrentProcess().Id + ".json"),
                 "{\"passed\":" + passed + ",\"failed\":" + (checks.Length - passed) + ",\"promoted\":" + promoted.ToString().ToLowerInvariant() +
                 ",\"role\":" + role.ToString().ToLowerInvariant() + ",\"term\":" + term.ToString().ToLowerInvariant() + ",\"identity\":" + identity.ToString().ToLowerInvariant() +
@@ -434,7 +434,7 @@ namespace BaldiTogether
             bool survivor = peers.Values.Any(p => p.Accepted && !p.Eliminated && (Hosting ? p.Ready : p.Id == self && readyAcknowledged));
             bool[] checks = { seed, scene, hash, generation, dead, survivor };
             int passed = checks.Count(c => c);
-            string folder = Path.Combine(Root, "MultiplayerMod/artifacts/tests"); Directory.CreateDirectory(folder);
+            string folder = Path.Combine(Lab.Workspace, "artifacts/tests"); Directory.CreateDirectory(folder);
             File.WriteAllText(Path.Combine(folder, "migration-floor-" + System.Diagnostics.Process.GetCurrentProcess().Id + ".json"),
                 "{\"passed\":" + passed + ",\"failed\":" + (checks.Length - passed) + ",\"hosting\":" + Hosting.ToString().ToLowerInvariant() +
                 ",\"sameSeed\":" + seed.ToString().ToLowerInvariant() + ",\"sameScene\":" + scene.ToString().ToLowerInvariant() + ",\"sameWorldHash\":" + hash.ToString().ToLowerInvariant() +

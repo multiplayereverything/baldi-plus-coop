@@ -15,7 +15,7 @@ namespace BaldiTogether
         bool focusedRemoteNearest, focusedHostNearest, focusedSwitchedBack;
         Vector3 focusedBaldiPosition;
         [Serializable] public sealed class FocusCommand { public int Phase; public Vector3 Position; }
-        string FocusPath { get { return Path.GetFullPath(Path.Combine(Root,Hosting ? "MultiplayerMod/private/focused-command.json" : "../../../MultiplayerMod/private/focused-command.json")); } }
+        string FocusPath { get { return Path.Combine(Hosting ? Lab.Workspace : Lab.Shared, "private/focused-command.json"); } }
 
         void UpdateFocusedSync()
         {

@@ -163,13 +163,13 @@ namespace BaldiTogether
         }
 
         string EncCommandPath
-        { get { return Path.GetFullPath(Path.Combine(Root, encRole == "host" ? "MultiplayerMod/private/encounter-command.json" : "../../../MultiplayerMod/private/encounter-command.json")); } }
+        { get { return Path.Combine(encRole == "host" ? Lab.Workspace : Lab.Shared, "private/encounter-command.json"); } }
 
         void EncWriteResults(bool final)
         {
             try
             {
-                string folder = Path.Combine(Root, "MultiplayerMod/artifacts/tests");
+                string folder = Path.Combine(Lab.Workspace, "artifacts/tests");
                 Directory.CreateDirectory(folder);
                 var sb = new StringBuilder();
                 sb.Append("{\"role\":").Append(EncJson(encRole)).Append(",\"finished\":").Append(final ? "true" : "false")

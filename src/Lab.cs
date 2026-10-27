@@ -17,9 +17,21 @@ namespace BaldiTogether
         static readonly HashSet<string> args = new HashSet<string>(Environment.GetCommandLineArgs());
         public static bool HasArg(string flag) { return args.Contains(flag); }
         public static bool Enabled { get { return enabled; } }
+        // Lab files (results, logs, saves, captures) go to the mod workspace: <game>/MultiplayerMod, or -bt-workspace
+        // when the repo lives elsewhere. Clients read the host's command files from -bt-shared; by default that is the
+        // workspace three folders above a lab copy kept in <workspace>/private/melon-lab.
+        static string workspace, shared;
+        public static string Workspace { get { return workspace ?? (workspace = Path.GetFullPath(ArgValue("-bt-workspace") ?? Path.Combine(TogetherRuntime.Root, "MultiplayerMod"))); } }
+        public static string Shared { get { return shared ?? (shared = Path.GetFullPath(ArgValue("-bt-shared") ?? Path.Combine(TogetherRuntime.Root, "../../../MultiplayerMod"))); } }
+        static string ArgValue(string flag)
+        {
+            string[] all = Environment.GetCommandLineArgs();
+            int i = Array.IndexOf(all, flag);
+            return i >= 0 && i + 1 < all.Length ? all[i + 1] : null;
+        }
         public static string SavePath()
         {
-            string path = Path.Combine(TogetherRuntime.Root, "MultiplayerMod/private/lab-saves");
+            string path = Path.Combine(Lab.Workspace, "private/lab-saves");
             Directory.CreateDirectory(path); return path;
         }
         public static void SetString(string key, string value) { }

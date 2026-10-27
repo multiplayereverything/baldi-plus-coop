@@ -47,7 +47,7 @@ namespace BaldiTogether
             var other=Resources.FindObjectsOfTypeAll<SoundObject>().First(s=>s.soundClip!=null&&s.soundClip.name!="BAL_HideSeek"&&s!=replacement);
             CheckNativeUi("other-sounds-unchanged",MultiplayerSound(other)==other);
             string json="{\"passed\":"+nativeUiChecks.Count(p=>p.Value)+",\"failed\":"+nativeUiChecks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",nativeUiChecks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/hideseek-audio-results.json"),json);Log("LAB Hide & Seek audio "+json);
+            File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/hideseek-audio-results.json"),json);Log("LAB Hide & Seek audio "+json);
         }
 
         public SoundObject MultiplayerSound(SoundObject original)

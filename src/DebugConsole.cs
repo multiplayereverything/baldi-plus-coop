@@ -101,7 +101,7 @@ namespace BaldiTogether
         }
         string SaveDebugReport()
         {
-            string folder=Path.Combine(Root,Lab.Enabled?"MultiplayerMod/private/debug-reports":"UserData/BaldiTogether/logs");
+            string folder=Lab.Enabled?Path.Combine(Lab.Workspace,"private/debug-reports"):Path.Combine(Root,"UserData/BaldiTogether/logs");
             Directory.CreateDirectory(folder);
             string path=Path.Combine(folder,"debug-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff")+".txt");
             File.WriteAllText(path,DebugStatus()+"\n\nPLAYERS\n"+DebugPeers()+"\n\nCONTACTS\n"+DebugContacts()+"\n\nNPCS\n"+DebugNpcs()+"\n\nLOG\n"+string.Join("\n",DebugLines()));
@@ -168,7 +168,7 @@ namespace BaldiTogether
             ExecuteDebugCommand("clear");checks["clear"]=DebugLines().Length==0;
             lock(debugGate){foreach(string line in old)debugLines.Enqueue(line);while(debugLines.Count>DebugCapacity)debugLines.Dequeue();}
             string json="{\"passed\":"+checks.Count(p=>p.Value)+",\"failed\":"+checks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",checks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            Directory.CreateDirectory(Path.Combine(Root,"MultiplayerMod/artifacts/tests"));File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/console-results.json"),json);Log("LAB console "+json);
+            Directory.CreateDirectory(Path.Combine(Lab.Workspace,"artifacts/tests"));File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/console-results.json"),json);Log("LAB console "+json);
         }
     }
 }

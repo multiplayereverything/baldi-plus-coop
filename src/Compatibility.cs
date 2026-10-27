@@ -197,7 +197,7 @@ namespace BaldiTogether
             latency[3]=42;latencySampleAt[3]=Time.realtimeSinceStartup;BuildNativeMenu();RefreshNativeLabels();
             checks["supplied-indicator-loaded"]=connectionIndicatorSprites!=null&&connectionIndicatorSprites.Length==5&&nativeQualityImages.ContainsKey(3);
             checks["live-room-status"]=nativeLabels["quality-3"].text=="Good 42 ms"&&nativeLabels["player-3"].text.Contains("Spectating");
-            var captureDir=Path.Combine(Root,"MultiplayerMod/private/captures/");Directory.CreateDirectory(captureDir);
+            var captureDir=Path.Combine(Lab.Workspace,"private/captures/");Directory.CreateDirectory(captureDir);
             yield return CaptureMenuFrame(captureDir+"connection-quality.png");
             PressNativeUi("compatibility");
             checks["room-compatibility-dissolves"]=global.TransitionActive&&nativePage==4;
@@ -208,7 +208,7 @@ namespace BaldiTogether
             checks["back-restores-room"]=nativeChoices.Any(b=>b.name=="lobby-options")&&nativeMenuCamera.targetTexture==null;
             peers.Remove(3);latency.Remove(3);latencySampleAt.Remove(3);Disconnect("Compatibility tour complete.");SetPanel(false);
             string json="{\"passed\":"+checks.Count(p=>p.Value)+",\"failed\":"+checks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",checks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            Directory.CreateDirectory(Path.Combine(Root,"MultiplayerMod/artifacts/tests"));File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/compatibility-results.json"),json);Log("LAB compatibility "+json);
+            Directory.CreateDirectory(Path.Combine(Lab.Workspace,"artifacts/tests"));File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/compatibility-results.json"),json);Log("LAB compatibility "+json);
         }
     }
 }

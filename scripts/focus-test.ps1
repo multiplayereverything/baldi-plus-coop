@@ -5,8 +5,7 @@ param([switch]$Windowed, [switch]$Lobby, [int]$TimeoutSeconds = 150)
 # The window is visible (focus cannot be tested on a hidden window). Keystrokes are only sent while the game
 # window is the foreground window. Only the test-owned process is stopped.
 $ErrorActionPreference = 'Stop'
-$modRoot = Split-Path $PSScriptRoot -Parent
-$gameRoot = Split-Path $modRoot -Parent
+. (Join-Path $PSScriptRoot 'paths.ps1')
 Add-Type @'
 using System; using System.Runtime.InteropServices;
 public static class FocusWin {
@@ -21,7 +20,7 @@ public static class FocusWin {
 foreach ($file in @('private/focus-ready.txt','private/focus-done.txt','artifacts/tests/focus-results.json','artifacts/tests/focus-events.txt')) {
     $path = Join-Path $modRoot $file; if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path }
 }
-$arguments = @('-logFile', ('"' + (Join-Path $modRoot 'private/focus-player.log') + '"'), '-bt-diagnostics', '-bt-lab', '-bt-focus-tour')
+$arguments = @('-logFile', ('"' + (Join-Path $modRoot 'private/focus-player.log') + '"'), '-bt-diagnostics', '-bt-lab', '-bt-focus-tour') + $workspaceArgs
 if ($Windowed) { $arguments += @('-screen-fullscreen', '0') }
 if ($Lobby) { $arguments += '-bt-focus-lobby' }
 $process = Start-Process -FilePath (Join-Path $gameRoot 'BALDI.exe') -ArgumentList $arguments -PassThru

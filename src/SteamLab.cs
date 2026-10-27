@@ -65,7 +65,7 @@ namespace BaldiTogether
             Online = true; OpenNativeOptions(SteamPage);
             CheckNativeUi("steam-page-builds", nativeLabels.ContainsKey("steam-host") && nativeLabels.ContainsKey("steam-find") && nativeLabels.ContainsKey("steam-visibility"));
             yield return new WaitForSecondsRealtime(0.5f);
-            QueueMenuCapture(Path.Combine(Root, "MultiplayerMod/artifacts/tests/steam-page.png"));
+            QueueMenuCapture(Path.Combine(Lab.Workspace, "artifacts/tests/steam-page.png"));
             yield return new WaitForSecondsRealtime(0.5f);
             FetchSteamRooms(); OpenNativeOptions(SteamListPage);
             until = Time.realtimeSinceStartup + 15;
@@ -81,13 +81,15 @@ namespace BaldiTogether
             while (!steamLobby.IsValid() && Active && Time.realtimeSinceStartup < until) yield return null;
             var lobby = steamLobby;
             CheckNativeUi("steam-host-opens-lobby", Active && Hosting && Network.Steam && lobby.IsValid() && SteamMatchmaking.GetLobbyOwner(lobby) == SteamUser.GetSteamID());
+            // The host is a member of its own lobby; an account that never joined it is not.
+            CheckNativeUi("steam-lobby-gate", lobby.IsValid() && SteamMember(SteamUser.GetSteamID()) && !SteamMember(new CSteamID(76561197960265728UL + 4242)));
             CheckNativeUi("steam-lobby-data", lobby.IsValid() && SteamMatchmaking.GetLobbyData(lobby, LobbyKey) == LobbyLabMark && SteamMatchmaking.GetLobbyData(lobby, "bt_version") == SteamVersion && SteamMatchmaking.GetLobbyData(lobby, "bt_name") == Name);
             CheckNativeUi("steam-join-presence", lobby.IsValid() && SteamFriends.GetFriendRichPresence(SteamUser.GetSteamID(), "connect") == "+connect_lobby " + lobby.m_SteamID
                 && ParseLobbyArgument(SteamFriends.GetFriendRichPresence(SteamUser.GetSteamID(), "connect")) == lobby.m_SteamID);
             BuildNativeMenu();
             CheckNativeUi("steam-room-has-invite", nativeLabels.ContainsKey("steam-invite") && nativeLabels["room-title"].text == "STEAM ROOM");
             yield return new WaitForSecondsRealtime(0.5f);
-            QueueMenuCapture(Path.Combine(Root, "MultiplayerMod/artifacts/tests/steam-room.png"));
+            QueueMenuCapture(Path.Combine(Lab.Workspace, "artifacts/tests/steam-room.png"));
             yield return new WaitForSecondsRealtime(0.5f);
             Disconnect("Lab: left the Steam room.");
             yield return null; yield return null;

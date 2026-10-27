@@ -1,6 +1,12 @@
 # Baldi's Basics Plus Multiplayer
 
-**Baldi Together 0.9.1:** experimental co-op for Baldi's Basics Plus **0.14.5**, over your LAN or online through Steam. Windows x64 / Unity 2020.3.49f1. BepInEx and MelonLoader builds share the same network implementation and can play together. Use **one loader per game copy**. Everyone must update to 0.9.1 (protocol 14). Older ZIPs are retained for rollback.
+**Baldi Together 0.9.2:** experimental co-op for Baldi's Basics Plus **0.14.5**, over your LAN or online through Steam. Windows x64 / Unity 2020.3.49f1. BepInEx and MelonLoader builds share the same network implementation and can play together. Use **one loader per game copy**. Everyone must update to 0.9.2 (protocol 15). Older ZIPs are retained for rollback.
+
+## New in 0.9.2
+
+- **Steam rooms are for your lobby only.** Only players who joined your Steam room can connect to your game.
+- **Random events stay in step.** A teammate's game no longer runs its own random events on its own schedule, and the host's time-limit setting reaches everyone.
+- **Lab tests stay out of your way:** test copies start minimized as small windows you can open from the taskbar.
 
 ## New in 0.9.1
 

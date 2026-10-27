@@ -12,7 +12,7 @@ client_path = root / f"private/melon-lab/MultiplayerMod/private/runtime-{client_
 checks = dict.fromkeys([
     "two_loaders_connected", "matching_level", "bidirectional_player_poses",
     "shared_notebook", "shared_door", "shared_activity", "npc_replication",
-    "matching_transition", "shared_item", "team_ping", "latency", "duplicate_item_blocked", "full_inventory_blocked", "authoritative_item_catalog",
+    "matching_transition", "shared_item", "team_ping", "latency", "duplicate_item_blocked", "full_inventory_blocked", "authoritative_item_catalog", "client_events_host_only",
 ], False)
 if "--sprites" in sys.argv:
     checks.update(dict.fromkeys(["sprite_avatar", "sprite_directions", "sprite_walk", "sprite_idle"], False))
@@ -42,6 +42,8 @@ while time.monotonic() < deadline:
         # loading_barrier was removed with the group loading barrier in 0.3.1 (host-led automatic entry).
         "duplicate_item_blocked": client.get("duplicateItemBlocked", False),
         "full_inventory_blocked": client.get("fullInventoryBlocked", False),
+        # The client asks its own world to start event timers (as a challenge scene does); only the host may run them.
+        "client_events_host_only": client.get("clientEventProbe", False) and client.get("clientEventTimersBlocked", 0) > 0 and client.get("eventsStarted") is False,
         "authoritative_item_catalog": matching and client.get("catalogApplied", False) and client.get("catalogPerturbed", False) and host.get("catalogHash") == client.get("catalogHash"),
     }
     if "--sprites" in sys.argv:

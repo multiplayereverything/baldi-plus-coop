@@ -74,7 +74,7 @@ namespace BaldiTogether
             EliminatePeer(self,baldi);EliminatePeer(3,baldi);
             CheckNativeUi("team-wipe-native-ending",deathSent&&Time.timeScale==0);
             string json="{\"passed\":"+nativeUiChecks.Count(p=>p.Value)+",\"failed\":"+nativeUiChecks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",nativeUiChecks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/spectator-results.json"),json);Log("LAB spectator "+json);
+            File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/spectator-results.json"),json);Log("LAB spectator "+json);
         }
         public bool LocalEliminated {get{Peer peer;return peers.TryGetValue(self,out peer)&&peer.Eliminated;}}
 

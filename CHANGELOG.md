@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.2, 2026-10-27
+
+- Steam rooms only accept players who are in the host's Steam lobby. Anyone who knew the host's Steam ID could open a connection to it before. A caller who is not yet listed gets 5 s for the lobby list to catch up, then is turned away.
+- Random events stay with the host. A client's game no longer starts its own event timers, which run on their own random schedule (a challenge scene starts them as it loads). The host's time-limit challenge setting now reaches every player, so TimeOut matches.
+- Lab:
+  - the repo can live outside the game folder (`scripts/paths.ps1`, `-bt-workspace`, `-bt-shared`);
+  - lab copies start minimized as small titled windows that restore at the right edge, at low priority and quality (`scripts/lab-window.ps1`, `-bt-lab-light`);
+  - new checks: `steam-lobby-gate` (with the `-bt-lab-no-lobby-gate` mutant) and `client_events_host_only` (with the `-ClientEvents` mutant).
+- Protocol 15: everyone must update to 0.9.2.
+
 ## 0.9.1, 2026-10-26
 
 - Fix: glue sticks now have a price per player, as in the game: 1000 YTPs plus 500 for each glue stick that player already owns, sold out once they own 4. The shared shelf used to show the host's price and stock to everyone.

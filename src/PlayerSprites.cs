@@ -303,7 +303,7 @@ namespace BaldiTogether
                 float distance = Vector3.Distance(camera.transform.position,peer.Avatar.transform.position);
                 if ((spriteCaptureMask & bit) != 0 || distance < 6 || distance > 18 || screen.z < 0 || screen.x < 0.2f || screen.x > 0.8f || screen.y < 0.2f || screen.y > 0.8f) continue;
                 spriteCaptureMask |= bit;
-                QueueScreenshot(Path.Combine(Root,"MultiplayerMod/private/captures/player-direction-" + peer.Visual.Direction + ".png"));
+                QueueScreenshot(Path.Combine(Lab.Workspace,"private/captures/player-direction-" + peer.Visual.Direction + ".png"));
             }
         }
 

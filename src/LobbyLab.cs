@@ -30,7 +30,7 @@ namespace BaldiTogether
         {
             string json = "{\"passed\":" + nativeUiChecks.Count(p => p.Value) + ",\"failed\":" + nativeUiChecks.Count(p => !p.Value) + ",\"checks\":{"
                 + string.Join(",", nativeUiChecks.Select(p => "\"" + p.Key + "\":" + p.Value.ToString().ToLowerInvariant()).ToArray()) + "}}";
-            string folder = Path.Combine(Root, "MultiplayerMod/artifacts/tests");
+            string folder = Path.Combine(Lab.Workspace, "artifacts/tests");
             Directory.CreateDirectory(folder);
             File.WriteAllText(Path.Combine(folder, file), json);
             Log("LAB " + label + " " + json);

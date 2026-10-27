@@ -100,7 +100,7 @@ namespace BaldiTogether
                 }
             }
             string json="{\"passed\":"+checks.Count(p=>p.Value)+",\"failed\":"+checks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",checks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/countdown-locker-results.json"),json);Log("LAB locker countdown "+json);
+            File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/countdown-locker-results.json"),json);Log("LAB locker countdown "+json);
         }
     }
 

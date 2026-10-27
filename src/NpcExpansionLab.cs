@@ -82,7 +82,7 @@ namespace BaldiTogether
             checks["locker-remote-excluded"]=NearestVisiblePeer(bully)==null;
             peers[self].Tagged=oldTagged;peers.Remove(3);
             string json="{\"passed\":"+checks.Count(p=>p.Value)+",\"failed\":"+checks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",checks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/npc-expansion-results.json"),json);Log("LAB NPC expansion "+json);
+            File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/npc-expansion-results.json"),json);Log("LAB NPC expansion "+json);
         }
     }
 }

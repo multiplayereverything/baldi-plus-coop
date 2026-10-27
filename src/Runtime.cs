@@ -29,7 +29,7 @@ namespace BaldiTogether
 
     public sealed partial class TogetherRuntime : MonoBehaviour
     {
-        public const string ModVersion = "0.9.1";
+        public const string ModVersion = "0.9.2";
         public static TogetherRuntime Instance;
         public static bool Applying;
         public static Action<string> Log = delegate { };
@@ -68,6 +68,7 @@ namespace BaldiTogether
         int acceptedInteractions, observedDoorOpens, observedNpcFrames;
         string pendingNext;
         int pendingLives, pendingAttempts, pendingLastLevel, pendingMode, pendingLifeMode;
+        bool pendingTimeLimit;
         string autoRole;
         // Lab auto-join retries while the host is still starting: two lab copies start at once and the client often
         // reached the title first, got "Connection refused" and sat idle until the test timed out.
@@ -117,6 +118,12 @@ namespace BaldiTogether
             }
             autoStartAt = Time.realtimeSinceStartup + 20;
             Application.runInBackground = true;
+            if (Lab.Enabled && Lab.HasArg("-bt-lab-light"))
+            {
+                // Lab copies share the PC with the user: lowest quality, and 60 FPS unless a timing test runs uncapped.
+                QualitySettings.SetQualityLevel(0, true); QualitySettings.vSyncCount = 0;
+                if (!Lab.HasArg("-bt-lab-uncapped")) Application.targetFrameRate = 60;
+            }
             Log("BaldiTogether " + ModVersion + " ready. F5 opens the LAN lobby. Game SHA256 " + gameHash);
         }
 
@@ -266,7 +273,7 @@ namespace BaldiTogether
             if (diagnostics && now > nextCapture)
             {
                 nextCapture = now + 10;
-                string directory = Path.Combine(Root, "MultiplayerMod/private/captures"); Directory.CreateDirectory(directory);
+                string directory = Path.Combine(Lab.Workspace, "private/captures"); Directory.CreateDirectory(directory);
                 QueueScreenshot(Path.Combine(directory, "screen-" + Process.GetCurrentProcess().Id + ".png"));
             }
             if(!Active){UpdateMigration();if(!Active)return;}
@@ -452,7 +459,7 @@ namespace BaldiTogether
             else if (op == Op.Start)
             {
                 int generation = r.ReadInt32(); Seed = r.ReadInt32(); string scene = Wire.Text(r, 128);
-                pendingNext = Wire.Text(r, 128); pendingLives = r.ReadInt32(); pendingAttempts = r.ReadInt32(); pendingLastLevel = r.ReadInt32(); pendingMode = r.ReadInt32(); pendingLifeMode = r.ReadInt32();
+                pendingNext = Wire.Text(r, 128); pendingLives = r.ReadInt32(); pendingAttempts = r.ReadInt32(); pendingLastLevel = r.ReadInt32(); pendingMode = r.ReadInt32(); pendingLifeMode = r.ReadInt32(); pendingTimeLimit = r.ReadBoolean();
                 if (generation <= epoch) throw new IOException("Invalid level generation.");
                 epoch = generation; sceneName = scene; ResetWorld(); pendingScene = scene;nextClientLoad=0;
                 Tell("Loading the host's level with seed " + Seed + "..."); SetPanel(false);
@@ -504,7 +511,7 @@ namespace BaldiTogether
             SendAll(Wire.Packet(Op.Start, w =>
             {
                 w.Write(epoch); w.Write(Seed); Wire.Text(w, sceneName); Wire.Text(w, core.nextLevel != null ? core.nextLevel.name : sceneName);
-                w.Write(core.Lives); w.Write(core.Attempts); w.Write(core.lastLevelNumber); w.Write((int)core.currentMode); w.Write((int)core.lifeMode);
+                w.Write(core.Lives); w.Write(core.Attempts); w.Write(core.lastLevelNumber); w.Write((int)core.currentMode); w.Write((int)core.lifeMode); w.Write(core.timeLimitChallenge);
             }));
             Tell("Loading " + sceneName + ", seed " + Seed + "."); SetPanel(false);
         }
@@ -547,7 +554,7 @@ namespace BaldiTogether
         {
             core.SaveEnabled = false; core.readyToStart = false;
             core.SetLives(pendingLives, true); core.SetAttempts(pendingAttempts); core.lastLevelNumber = pendingLastLevel;
-            core.currentMode = (Mode)pendingMode; core.lifeMode = (LifeMode)pendingLifeMode;
+            core.currentMode = (Mode)pendingMode; core.lifeMode = (LifeMode)pendingLifeMode; core.timeLimitChallenge = pendingTimeLimit; // shapes TimeOut
             core.nextLevel = Resources.FindObjectsOfTypeAll<SceneObject>().FirstOrDefault(s => s.name == pendingNext);
             if (core.nextLevel == null) throw new IOException("Host's next level is unavailable: " + pendingNext);
             Time.timeScale = 0; AudioListener.pause = false;
@@ -602,6 +609,7 @@ namespace BaldiTogether
             PlayerManager player = Singleton<CoreGameManager>.Instance.GetPlayer(0);
             if (testStep == 0)
             {
+                ProbeClientEventTimers(Singleton<BaseGameManager>.Instance == null ? null : Singleton<BaseGameManager>.Instance.Ec);
                 var entry = notebooks.FirstOrDefault(pair => pair.Value != null && !pair.Value.collected && !pair.Value.hidden);
                 if (entry.Value == null) return;
                 testNotebook = entry.Key; player.Teleport(entry.Value.transform.position + new Vector3(3,0,0));
@@ -886,7 +894,7 @@ namespace BaldiTogether
         {
             try
             {
-                string path = Path.Combine(Root, "MultiplayerMod/private/runtime-" + Process.GetCurrentProcess().Id + ".json");
+                string path = Path.Combine(Lab.Workspace, "private/runtime-" + Process.GetCurrentProcess().Id + ".json");
                 File.WriteAllText(path, BuildDiagnostic());
             }
             catch (Exception ex) { Log("Diagnostic write: " + ex.Message); }

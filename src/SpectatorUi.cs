@@ -365,7 +365,7 @@ namespace BaldiTogether
                 for (int i = 0; i < pixels.Length; i++) sum += (pixels[i].r * .299 + pixels[i].g * .587 + pixels[i].b * .114) / 255.0;
                 float brightness = pixels.Length == 0 ? 0 : (float)(sum / pixels.Length);
                 byte[] png = screen.EncodeToPNG();
-                string folder = Path.Combine(Root, "MultiplayerMod/artifacts/tests"); Directory.CreateDirectory(folder);
+                string folder = Path.Combine(Lab.Workspace, "artifacts/tests"); Directory.CreateDirectory(folder);
                 File.WriteAllBytes(Path.Combine(folder, "spectator-ui-" + state + ".png"), png);
                 spectatorUiCaptureBytes[state] = png.Length; spectatorUiCaptureBrightness[state] = brightness;
                 Log("LAB spectator UI capture " + state + " " + width + "x" + height + " bytes=" + png.Length + " brightness=" + brightness.ToString("0.000"));

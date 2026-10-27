@@ -118,7 +118,7 @@ namespace BaldiTogether
                 DestroyAvatar(replica);peers.Remove(3);
             }
             string json="{\"passed\":"+nativeUiChecks.Count(p=>p.Value)+",\"failed\":"+nativeUiChecks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",nativeUiChecks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/locker-results.json"),json);Log("LAB locker "+json);
+            File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/locker-results.json"),json);Log("LAB locker "+json);
         }
 
         System.Collections.IEnumerator TourPageTransitions()
@@ -138,7 +138,7 @@ namespace BaldiTogether
                 var blend=(Texture2D)HarmonyLib.AccessTools.Field(typeof(GlobalCam),"transTexture").GetValue(global);
                 CheckNativeUi("destination-"+nativeUiChecks.Count,destination.GetPixels32().Count(p=>p.r>245&&p.g>245&&p.b>245)>destination.width*destination.height*.65f);
                 CheckNativeUi("blend-"+nativeUiChecks.Count,destination.GetPixels32().Where((p,i)=>!p.Equals(outgoing[i])).Count()>10&&blend.GetPixels32().Where((p,i)=>!p.Equals(outgoing[i])).Count()>10);
-                if(key=="join")File.WriteAllBytes(Path.Combine(Root,"MultiplayerMod/private/captures/page-dissolve.png"),blend.EncodeToPNG());
+                if(key=="join")File.WriteAllBytes(Path.Combine(Lab.Workspace,"private/captures/page-dissolve.png"),blend.EncodeToPNG());
                 while(global.TransitionActive)yield return null;
                 yield return null;
                 CheckNativeUi("restored-"+nativeUiChecks.Count,nativeMenuCamera.targetTexture==null&&nativeOpeningTransition==null);
@@ -149,7 +149,7 @@ namespace BaldiTogether
             PressNativeUi("name");CheckNativeUi("field-edits-without-dissolve",nativeEditing=="name"&&!global.TransitionActive);
             nativeEditing=null;SetPanel(false);
             string json="{\"passed\":"+nativeUiChecks.Count(p=>p.Value)+",\"failed\":"+nativeUiChecks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",nativeUiChecks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/page-transition-results.json"),json);Log("LAB page transitions "+json);
+            File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/page-transition-results.json"),json);Log("LAB page transitions "+json);
         }
 
         System.Collections.IEnumerator TourBackTransition()
@@ -166,14 +166,14 @@ namespace BaldiTogether
             CheckNativeUi("back-destination-art",TitleArtworkPixels(destination)>30);
             int changed=snapshot.GetPixels32().Where((p,i)=>!p.Equals(before[i])).Count();
             CheckNativeUi("back-progressive-blend",changed>100&&changed<before.Length*.9f&&TitleArtworkPixels(snapshot)>5);
-            File.WriteAllBytes(Path.Combine(Root,"MultiplayerMod/private/captures/back-dissolve.png"),snapshot.EncodeToPNG());
+            File.WriteAllBytes(Path.Combine(Lab.Workspace,"private/captures/back-dissolve.png"),snapshot.EncodeToPNG());
             while(global.TransitionActive)yield return null;
             CheckNativeUi("back-restores-cameras",!nativeMenuRoot.activeSelf&&!nativeMenuCamera.enabled&&nativeMenuCamera.targetTexture==null);
             multiplayerButton.Press();yield return new WaitForSecondsRealtime(1);PressNativeUi("host");portText="27029";PressNativeUi("connect");BuildNativeMenu();PressNativeUi("back");
             CheckNativeUi("room-back-preserves-connection",Hosting&&!show&&global.TransitionActive);
             while(global.TransitionActive)yield return null;Disconnect("Back transition tour complete.");
             string json="{\"passed\":"+nativeUiChecks.Count(p=>p.Value)+",\"failed\":"+nativeUiChecks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",nativeUiChecks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            Directory.CreateDirectory(Path.Combine(Root,"MultiplayerMod/artifacts/tests"));File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/back-transition-results.json"),json);Log("LAB back transition "+json);
+            Directory.CreateDirectory(Path.Combine(Lab.Workspace,"artifacts/tests"));File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/back-transition-results.json"),json);Log("LAB back transition "+json);
         }
 
         int TitleArtworkPixels(Texture2D texture)
@@ -192,19 +192,19 @@ namespace BaldiTogether
             yield return new WaitForEndOfFrame();
             var destination=(Texture2D)HarmonyLib.AccessTools.Field(typeof(GlobalCam),"toCopyTexture").GetValue(global);
             Log("TITLE ART initial pixels="+TitleArtworkPixels(destination)+" transition="+global.TransitionActive+" buttonActive="+multiplayerButton.gameObject.activeInHierarchy);
-            File.WriteAllBytes(Path.Combine(Root,"MultiplayerMod/private/captures/title-art-destination.png"),destination.EncodeToPNG());
+            File.WriteAllBytes(Path.Combine(Lab.Workspace,"private/captures/title-art-destination.png"),destination.EncodeToPNG());
             CheckNativeUi("initial-destination-art",TitleArtworkPixels(destination)>30);
             for(int i=0;i<3;i++)yield return new WaitForEndOfFrame();
             var transition=(Texture2D)HarmonyLib.AccessTools.Field(typeof(GlobalCam),"transTexture").GetValue(global);
             CheckNativeUi("initial-dissolve-art",TitleArtworkPixels(transition)>10);
-            File.WriteAllBytes(Path.Combine(Root,"MultiplayerMod/private/captures/title-art-dissolve.png"),transition.EncodeToPNG());
+            File.WriteAllBytes(Path.Combine(Lab.Workspace,"private/captures/title-art-dissolve.png"),transition.EncodeToPNG());
             while(global.TransitionActive)yield return null;
             var menu=titleMenu;menu.gameObject.SetActive(false);yield return new WaitForSecondsRealtime(.7f);
             global.Transition(UiTransition.Dither,.01666667f);menu.gameObject.SetActive(true);yield return new WaitForEndOfFrame();
             CheckNativeUi("return-destination-art",TitleArtworkPixels(destination)>30);
             CheckNativeUi("one-title-button",menu.GetComponentsInChildren<StandardMenuButton>(true).Count(b=>b.name=="BaldiTogether Multiplayer")==1);
             string json="{\"passed\":"+nativeUiChecks.Count(p=>p.Value)+",\"failed\":"+nativeUiChecks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",nativeUiChecks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            Directory.CreateDirectory(Path.Combine(Root,"MultiplayerMod/artifacts/tests"));File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/title-art-transition-results.json"),json);Log("LAB title artwork transition "+json);
+            Directory.CreateDirectory(Path.Combine(Lab.Workspace,"artifacts/tests"));File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/title-art-transition-results.json"),json);Log("LAB title artwork transition "+json);
         }
 
         System.Collections.IEnumerator TourButtonArtwork()
@@ -218,11 +218,11 @@ namespace BaldiTogether
             canvas.GetComponent<GraphicRaycaster>().Raycast(new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current){position=RectTransformUtility.WorldToScreenPoint(Singleton<GlobalCam>.Instance.Cam,buttonRect.TransformPoint(buttonRect.rect.center))},hits);
             Log("ART raycast: "+string.Join(",",hits.Select(h=>h.gameObject.name).ToArray()));
             CheckNativeUi("artwork-hit",hits.Count>0&&hits[0].gameObject==multiplayerButton.gameObject);
-            Singleton<GlobalCam>.Instance.Cam.Render();yield return CaptureMenuFrame(Path.Combine(Root,"MultiplayerMod/private/captures/button-art.png"));
+            Singleton<GlobalCam>.Instance.Cam.Render();yield return CaptureMenuFrame(Path.Combine(Lab.Workspace,"private/captures/button-art.png"));
             multiplayerButton.Press();CheckNativeUi("artwork-opens-menu",show&&nativeOpeningTransition!=null);
             yield return new WaitForSecondsRealtime(1);CheckNativeUi("artwork-dissolve-completes",show&&nativeOpeningTransition==null&&nativeMenuCamera.targetTexture==null);
             string json="{\"passed\":"+nativeUiChecks.Count(p=>p.Value)+",\"failed\":"+nativeUiChecks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",nativeUiChecks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            Directory.CreateDirectory(Path.Combine(Root,"MultiplayerMod/artifacts/tests"));File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/button-art-results.json"),json);SetPanel(false);Log("LAB button artwork "+json);
+            Directory.CreateDirectory(Path.Combine(Lab.Workspace,"artifacts/tests"));File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/button-art-results.json"),json);SetPanel(false);Log("LAB button artwork "+json);
         }
 
         System.Collections.IEnumerator TourOptions()
@@ -231,7 +231,7 @@ namespace BaldiTogether
             string oldName=Name,oldCode=Code;int oldSeed=Seed;
             PressNativeUi("player-options");
             CheckNativeUi("player-options",nativeLabels["heading"].text=="PLAYER OPTIONS"&&nativeLabels.Keys.Count(k=>k.StartsWith("planned-"))==5&&nativeChoices.Count==1);
-            string path=Path.Combine(Root,"MultiplayerMod/private/captures/");
+            string path=Path.Combine(Lab.Workspace,"private/captures/");
             yield return CaptureMenuFrame(path+"options-player.png");yield return CaptureMenuFrame(path+"options-player-small.png");CheckNativeUi("player-small",nativeSmallFits);
             PressNativeUi("back");CheckNativeUi("player-back",nativeChoices.Any(b=>b.name=="host")&&Name==oldName&&Code==oldCode&&Seed==oldSeed);
             PressNativeUi("host");portText="27029";PressNativeUi("connect");BuildNativeMenu();PressNativeUi("lobby-options");
@@ -239,7 +239,7 @@ namespace BaldiTogether
             yield return CaptureMenuFrame(path+"options-lobby.png");yield return CaptureMenuFrame(path+"options-lobby-small.png");CheckNativeUi("lobby-small",nativeSmallFits);
             NativeBack();CheckNativeUi("lobby-back",Hosting&&nativeChoices.Any(b=>b.name=="lobby-options")&&nativeLabels.ContainsKey("player-0"));
             string json="{\"passed\":"+nativeUiChecks.Count(p=>p.Value)+",\"failed\":"+nativeUiChecks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",nativeUiChecks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-            Directory.CreateDirectory(Path.Combine(Root,"MultiplayerMod/artifacts/tests"));File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/options-results.json"),json);
+            Directory.CreateDirectory(Path.Combine(Lab.Workspace,"artifacts/tests"));File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/options-results.json"),json);
             Disconnect("Options UI tour complete.");SetPanel(false);Log("LAB options "+json);
         }
 
@@ -257,18 +257,18 @@ namespace BaldiTogether
                 var current=texture.GetPixels32();int changed=0;
                 for(int i=0;i<current.Length;i++)if(!current[i].Equals(before[i]))changed++;
                 if(changed>100 && changed<current.Length*.9f)intermediate=true;
-                if(frames==4)File.WriteAllBytes(Path.Combine(Root,"MultiplayerMod/private/transition-mid.png"),texture.EncodeToPNG());
+                if(frames==4)File.WriteAllBytes(Path.Combine(Lab.Workspace,"private/transition-mid.png"),texture.EncodeToPNG());
             }
             yield return null;
             var copy=(Texture2D)HarmonyLib.AccessTools.Field(typeof(GlobalCam),"toCopyTexture").GetValue(global);
             // Menu's white background must replace the colorful title in the captured destination.
             var pixels=copy.GetPixels32();int white=0;foreach(var p in pixels)if(p.r>245&&p.g>245&&p.b>245)white++;
             destination=white>pixels.Length*.65f;
-            File.WriteAllBytes(Path.Combine(Root,"MultiplayerMod/private/transition-destination.png"),copy.EncodeToPNG());
+            File.WriteAllBytes(Path.Combine(Lab.Workspace,"private/transition-destination.png"),copy.EncodeToPNG());
             bool restored=!global.TransitionActive&&nativeOpeningTransition==null&&nativeMenuCamera.targetTexture==null&&nativePointer.enabled;
             int passed=(started?1:0)+(intermediate?1:0)+(destination?1:0)+(restored?1:0);
             string json="{\"passed\":"+passed+",\"failed\":"+(4-passed)+",\"started\":"+started.ToString().ToLowerInvariant()+",\"intermediate\":"+intermediate.ToString().ToLowerInvariant()+",\"destination\":"+destination.ToString().ToLowerInvariant()+",\"restored\":"+restored.ToString().ToLowerInvariant()+",\"frames\":"+frames+"}";
-            Directory.CreateDirectory(Path.Combine(Root,"MultiplayerMod/artifacts/tests"));File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/transition-results.json"),json);Log("LAB transition "+json);
+            Directory.CreateDirectory(Path.Combine(Lab.Workspace,"artifacts/tests"));File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/transition-results.json"),json);Log("LAB transition "+json);
         }
 
         void AddMenuButton()
@@ -282,8 +282,8 @@ namespace BaldiTogether
             {
                 menuDumped = true;
                 var lines = canvas.GetComponentsInChildren<RectTransform>(true).Select(r => r.name + " | " + r.rect + " | anchor " + r.anchorMin + " | pos " + r.anchoredPosition);
-                Directory.CreateDirectory(Path.Combine(Root, "MultiplayerMod/private"));
-                File.WriteAllLines(Path.Combine(Root, "MultiplayerMod/private/menu-hierarchy.txt"), lines.ToArray());
+                Directory.CreateDirectory(Path.Combine(Lab.Workspace, "private"));
+                File.WriteAllLines(Path.Combine(Lab.Workspace, "private/menu-hierarchy.txt"), lines.ToArray());
             }
             GameObject item = new GameObject("BaldiTogether Multiplayer", typeof(RectTransform));
             RectTransform rect = (RectTransform)item.transform;
@@ -442,11 +442,11 @@ namespace BaldiTogether
         {
             nextAspectLab=now+3;
             if(aspectLabStep==0)multiplayerButton.Press();
-            if(aspectLabStep<4)QueueMenuCapture(Path.Combine(Root,"MultiplayerMod/private/captures/aspect-"+new[]{"wide","classic","ultrawide","portrait"}[aspectLabStep]+".png"));
+            if(aspectLabStep<4)QueueMenuCapture(Path.Combine(Lab.Workspace,"private/captures/aspect-"+new[]{"wide","classic","ultrawide","portrait"}[aspectLabStep]+".png"));
             else
             {
                 string json="{\"passed\":"+nativeUiChecks.Count(p=>p.Value)+",\"failed\":"+nativeUiChecks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",nativeUiChecks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-                File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/aspect-results.json"),json);SetPanel(false);Log("LAB aspect tour complete.");
+                File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/aspect-results.json"),json);SetPanel(false);Log("LAB aspect tour complete.");
             }
             aspectLabStep++;
         }
@@ -455,7 +455,7 @@ namespace BaldiTogether
         {
             if (nextUiLab == 0) { nextUiLab = now + 6; return; }
             nextUiLab = now + 6;
-            string path = Path.Combine(Root, "MultiplayerMod/private/captures/ui-native-");
+            string path = Path.Combine(Lab.Workspace, "private/captures/ui-native-");
             switch (uiLabStep++)
             {
                 case 0: QueueMenuCapture(path + "menu.png"); break;
@@ -483,7 +483,7 @@ namespace BaldiTogether
                 case 12:
                     CheckNativeUi("small-layout",nativeSmallFits);
                     string json="{\"passed\":"+nativeUiChecks.Count(p=>p.Value)+",\"failed\":"+nativeUiChecks.Count(p=>!p.Value)+",\"checks\":{"+string.Join(",",nativeUiChecks.Select(p=>"\""+p.Key+"\":"+p.Value.ToString().ToLowerInvariant()).ToArray())+"}}";
-                    Directory.CreateDirectory(Path.Combine(Root,"MultiplayerMod/artifacts/tests")); File.WriteAllText(Path.Combine(Root,"MultiplayerMod/artifacts/tests/native-ui-results.json"),json);
+                    Directory.CreateDirectory(Path.Combine(Lab.Workspace,"artifacts/tests")); File.WriteAllText(Path.Combine(Lab.Workspace,"artifacts/tests/native-ui-results.json"),json);
                     SetPanel(false); Log("LAB UI tour complete."); break;
             }
         }

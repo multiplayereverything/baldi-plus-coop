@@ -9,11 +9,20 @@ def text(value):
     data = value.encode("utf-8")
     return struct.pack("<H", len(data)) + data
 
-root = Path(__file__).resolve().parents[2]
+def find_game(repo):
+    # Same order as scripts/paths.ps1: BT_GAME_ROOT, a folder above the repo with BALDI.exe, the default Steam install.
+    import os
+    if os.environ.get("BT_GAME_ROOT"):
+        return Path(os.environ["BT_GAME_ROOT"])
+    for folder in repo.parents:
+        if (folder / "BALDI.exe").exists():
+            return folder
+    return Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "Steam/steamapps/common/Baldi's Basics Plus"
+root = find_game(Path(__file__).resolve().parents[1])
 game_hash = hashlib.sha256((root / "BALDI_Data/Managed/Assembly-CSharp.dll").read_bytes()).hexdigest()
 
 def hello(code):
-    return b"\x01" + struct.pack("<i", 14) + text("0.9.1") + text(game_hash) + text("Probe") + text(code)
+    return b"\x01" + struct.pack("<i", 15) + text("0.9.2") + text(game_hash) + text("Probe") + text(code)
 
 cases = {
     "message before handshake": b"\x07" + struct.pack("<ii4f", 1, 3, 0, 0, 0, 0),

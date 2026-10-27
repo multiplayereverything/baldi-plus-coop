@@ -34,16 +34,17 @@ Updated 2026-10-27. Start here when picking the project up on a new PC. A new se
 ## Dev setup on a new PC
 
 1. **Game:** install Baldi's Basics Plus from Steam (0.14.5). The usual path is `C:\Program Files (x86)\Steam\steamapps\common\Baldi's Basics Plus`.
-2. **Repo:** clone this repository into the game folder as `MultiplayerMod`:
-   `git clone https://github.com/multiplayereverything/baldi-plus-coop "<game folder>\MultiplayerMod"`
-   The scripts find the game by walking up to `BALDI.exe`; elsewhere, set `BT_GAME_ROOT` to the game folder. Commit as `multiplayereverything <347356261+multiplayereverything@users.noreply.github.com>` so no personal email reaches the public history.
+2. **Repo:** clone this repository anywhere. On the second PC it lives in `Desktop\AIStuff\ai-work-pc-games\Baldi Multipplayer Mod`, outside the game folder (the user's choice); inside the game folder as `MultiplayerMod` also works.
+   - `scripts/paths.ps1` finds the game: `BT_GAME_ROOT`, else a folder above the repo holding `BALDI.exe`, else the default Steam path. The three Python tests that read game files use the same order.
+   - Lab launches pass `-bt-workspace <repo>` to the BepInEx host and `-bt-shared <repo>` to the MelonLoader client, so lab results, logs, saves and command files land in the repo wherever it is. Without them the mod uses `<game>\MultiplayerMod` as before.
+   - Commit as `multiplayereverything <347356261+multiplayereverything@users.noreply.github.com>` so no personal email reaches the public history.
 3. **Loader dependencies** (git-ignored, under `MultiplayerMod/deps/`):
    - `deps/BepInEx-5.4.23.5/`: extract `BepInEx_win_x64_5.4.23.5.zip` (from the BepInEx GitHub releases). The build reads `BepInEx/core/BepInEx.dll` and `0Harmony.dll`.
    - `deps/MelonLoader-0.7.3/`: extract `MelonLoader.x64.zip` 0.7.3 (from the MelonLoader GitHub releases). The build reads `MelonLoader/net472/MelonLoader.dll` and `0Harmony.dll`.
 4. **Compiler:** the .NET Framework 4 C# compiler at `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe` (included with Windows). No SDK is needed.
 5. **Build:** `powershell -ExecutionPolicy Bypass -File scripts/build.ps1` writes `artifacts/BepInEx/` and `artifacts/MelonLoader/`. Run `scripts/test.ps1` after transport changes (26 checks plus the no-keepalive mutant). `scripts/package.ps1` makes the release ZIPs in `artifacts/release/`.
 6. **Install for play and single-process tours:** install BepInEx 5.4.23.5 x64 in the game folder, then copy `artifacts/BepInEx/BaldiTogether.BepInEx.dll` to `BepInEx/plugins/BaldiTogether/`. `scripts/install.ps1` does the same.
-7. **MelonLoader lab copy** (needed by every two-process test): `MultiplayerMod/private/melon-lab/` is a second game copy with MelonLoader 0.7.3 installed. On the original PC it uses hardlinks to the game files; a plain copy of the game folder also works. Install MelonLoader 0.7.3 into it. `launch-lab.ps1` copies the MelonLoader DLL in on each launch. Never edit hardlinked game bytes.
+7. **MelonLoader lab copy** (needed by every two-process test): `private/melon-lab/` in the repo is a second game copy with MelonLoader 0.7.3 installed. On the original PC it uses hardlinks to the game files; on the second PC it is a plain copy (`robocopy <game> private\melon-lab /E /XD BepInEx /XF winhttp.dll doorstop_config.ini`, then copy `deps/MelonLoader-0.7.3/*` into it). `launch-lab.ps1` copies the MelonLoader DLL in on each launch. Never edit hardlinked game bytes.
 8. **Python:** the tests use only the standard library (Python 3.10 or newer). `scripts/lab-suite.ps1` expects `MultiplayerMod/.venv/Scripts/python.exe`; create it with `python -m venv .venv`.
 9. **Tools used by sessions:**
    - `graphify`: rebuild the code graph with `/graphify .`, update it with `graphify update .`; `graphify-out/` is git-ignored.

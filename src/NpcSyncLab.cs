@@ -19,7 +19,7 @@ namespace BaldiTogether
         Vector3 npcLabHostPosition;
         string npcLabPending;
         [Serializable] public sealed class NpcLabCommand { public int Phase; public Vector3 Position; }
-        string NpcLabPath { get { return Path.GetFullPath(Path.Combine(Root,Hosting ? "MultiplayerMod/private/npc-command.json" : "../../../MultiplayerMod/private/npc-command.json")); } }
+        string NpcLabPath { get { return Path.Combine(Hosting ? Lab.Workspace : Lab.Shared, "private/npc-command.json"); } }
 
         void NpcLabMoveClient(int phase)
         {

@@ -197,7 +197,7 @@ namespace BaldiTogether
         void WriteResultsLive(Dictionary<string, bool> checks, FloorResults result)
         {
             resultsLiveWritten = true;
-            string path = Path.Combine(Root, "MultiplayerMod/artifacts/tests/results-live-" + System.Diagnostics.Process.GetCurrentProcess().Id + ".json");
+            string path = Path.Combine(Lab.Workspace, "artifacts/tests/results-live-" + System.Diagnostics.Process.GetCurrentProcess().Id + ".json");
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, "{\"role\":\"" + (Hosting ? "host" : "client") + "\",\"epoch\":" + epoch +
                 ",\"resultEpoch\":" + result.Generation + ",\"points\":" + result.Points + ",\"wallet\":" + result.Wallet +
@@ -250,7 +250,7 @@ namespace BaldiTogether
             core.readyToStart = ready; Time.timeScale = scale;
             lastFloorResults = previous; resultsAcceptedGeneration = accepted;
             UnityEngine.Object.Destroy(screen.gameObject);
-            string path = Path.Combine(Root, "MultiplayerMod/artifacts/tests/results-sync-results.json");
+            string path = Path.Combine(Lab.Workspace, "artifacts/tests/results-sync-results.json");
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, "{\"passed\":" + checks.Count(p => p.Value) + ",\"failed\":" + checks.Count(p => !p.Value) + ",\"checks\":{" +
                 string.Join(",", checks.Select(p => "\"" + p.Key + "\":" + (p.Value ? "true" : "false")).ToArray()) + "}}");
