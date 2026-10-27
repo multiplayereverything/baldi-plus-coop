@@ -12,14 +12,15 @@ namespace BaldiTogether
     // schedule. Hide & Seek only starts them on the host already (countdown release); BaseGameManager.Initialize
     // and PitstopGameManager start them directly when a scene spawns NPCs on init (challenges), so block it here.
     // The host sends each event's announcement, begin and end by its index in the shared list; clients mirror the
-    // events whose effects are local (fog, mystery room, the ruler), with their own end timer disabled so only the
+    // events whose effects are local (fog, mystery room, the ruler, the time-out), with their own end timer disabled so only the
     // host ends them. Other event types are host-only for now; their NPC and door effects already replicate.
     public partial class TogetherRuntime
     {
         const byte EventEnded = 0, EventBegun = 1, EventAnnounced = 2;
         static readonly System.Reflection.FieldInfo EventsField = AccessTools.Field(typeof(EnvironmentController), "events"), CurrentEventsField = AccessTools.Field(typeof(EnvironmentController), "currentEvents"),
             CurrentTypesField = AccessTools.Field(typeof(EnvironmentController), "currentEventTypes"), EcAudioField = AccessTools.Field(typeof(EnvironmentController), "audMan"),
-            EcJingleField = AccessTools.Field(typeof(EnvironmentController), "audEventNotification"), RemainingField = AccessTools.Field(typeof(RandomEvent), "remainingTime");
+            EcJingleField = AccessTools.Field(typeof(EnvironmentController), "audEventNotification"), RemainingField = AccessTools.Field(typeof(RandomEvent), "remainingTime"),
+            TimeOutAnger = AccessTools.Field(typeof(TimeOut), "baldiAngerAmount");
         static List<RandomEvent> EventList(EnvironmentController ec) { return (List<RandomEvent>)EventsField.GetValue(ec); }
         static List<RandomEvent> CurrentEventList(EnvironmentController ec) { return (List<RandomEvent>)CurrentEventsField.GetValue(ec); }
         static List<RandomEventType> CurrentEventTypeList(EnvironmentController ec) { return (List<RandomEventType>)CurrentTypesField.GetValue(ec); }
@@ -31,7 +32,7 @@ namespace BaldiTogether
         internal void NoteBlockedClientEvents() { clientEventTimersBlocked++; }
 
         static bool MirroredOnClients(RandomEventType type)
-        { return type == RandomEventType.Fog || type == RandomEventType.MysteryRoom || type == RandomEventType.Snap; }
+        { return type == RandomEventType.Fog || type == RandomEventType.MysteryRoom || type == RandomEventType.Snap || type == RandomEventType.TimeOut; }
 
         void ResetEvents() { lastMirroredEvent = ""; eventLabStep = 0; labButtonPressed = false; labButtonDoorsOpenBefore = -1; }
 
@@ -79,6 +80,8 @@ namespace BaldiTogether
             {
                 if (state == EventBegun && !randomEvent.Active)
                 {
+                    // TimeOut: each player gets the after-hours rule break, dimming lights and music; Baldi's anger is the host's.
+                    if (randomEvent is TimeOut) TimeOutAnger.SetValue(randomEvent, 0f);
                     randomEvent.Begin();
                     RemainingField.SetValue(randomEvent, float.MaxValue); // the host's End ends it
                     CurrentEventList(manager.Ec).Add(randomEvent); CurrentEventTypeList(manager.Ec).Add(randomEvent.Type);
