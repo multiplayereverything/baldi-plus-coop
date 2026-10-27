@@ -170,6 +170,20 @@ namespace BaldiTogether
     static class DoorPatch
     { static bool Prefix(StandardDoor __instance) { var r = ModHooks.Current; return r == null || r.Request(__instance, 1); } }
 
+    [HarmonyPatch(typeof(GameButtonBase), "Clicked")]
+    static class GameButtonPatch
+    {
+        // Only buttons that drive world objects (lockdown-door levers and the like). Elevator buttons have their own
+        // path (RemoteElevators) and manager-function buttons act on the presser's own game.
+        static readonly System.Reflection.FieldInfo receivers = AccessTools.Field(typeof(GameButtonBase), "buttonReceivers"), special = AccessTools.Field(typeof(GameButtonBase), "triggerSpecialManagerFunction");
+        internal static bool HostOwned(GameButtonBase button)
+        {
+            var list = (System.Collections.Generic.List<IButtonReceiver>)receivers.GetValue(button);
+            return list != null && list.Count > 0 && !list.Any(x => x is Elevator) && !(bool)special.GetValue(button);
+        }
+        static bool Prefix(GameButtonBase __instance) { var r = ModHooks.Current; return r == null || !HostOwned(__instance) || r.Request(__instance, 4); }
+    }
+
     [HarmonyPatch(typeof(Activity), "Completed", new[] { typeof(int), typeof(bool) })]
     static class ActivityPatch
     { static bool Prefix(Activity __instance, bool correct) { var r = ModHooks.Current; return r == null || r.Request(__instance, correct ? (byte)2 : (byte)3); } }

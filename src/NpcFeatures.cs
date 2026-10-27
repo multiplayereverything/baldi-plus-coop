@@ -27,6 +27,7 @@ namespace BaldiTogether
             Guard("ResetBeans", ResetBeans);
             Guard("ResetCrafters", ResetCrafters);
             Guard("ResetPomp", ResetPomp);
+            Guard("ResetEvents", ResetEvents);
             Guard("ResetTheTest", ResetTheTest);
             Guard("ResetReflex", ResetReflex);
             Guard("ResetChalkles", ResetChalkles);
@@ -44,6 +45,7 @@ namespace BaldiTogether
             Guard("UpdateChalkles", UpdateChalkles);
             Guard("UpdateItems", UpdateItems);
             Guard("UpdateHallMonitor", UpdateHallMonitor);
+            Guard("UpdateEventLab", UpdateEventLab);
         }
 
         void UpdateEncounterLabGuarded() { Guard("UpdateEncounterLab", UpdateEncounterLab); }
@@ -55,7 +57,7 @@ namespace BaldiTogether
 
         bool HandleNpcFeatureHost(Op op, BinaryReader r)
         {
-            return HandleBeansHost(op, r) || HandleCraftersHost(op, r) || HandlePompHost(op, r) || HandleTheTestHost(op, r) || HandleReflexHost(op, r) || HandleChalklesHost(op, r) || HandleItemsHost(op, r);
+            return HandleBeansHost(op, r) || HandleCraftersHost(op, r) || HandlePompHost(op, r) || HandleTheTestHost(op, r) || HandleReflexHost(op, r) || HandleChalklesHost(op, r) || HandleItemsHost(op, r) || HandleEventHost(op, r);
         }
 
         static void WriteFeatureSection(BinaryWriter w, Action<BinaryWriter> write)

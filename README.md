@@ -5,7 +5,8 @@
 ## New in 0.9.2
 
 - **Steam rooms are for your lobby only.** Only players who joined your Steam room can connect to your game.
-- **Random events stay in step.** A teammate's game no longer runs its own random events on its own schedule, and the host's time-limit setting reaches everyone.
+- **Random events for everyone.** Event announcements, fog, the Mystery Room, the broken ruler and the after-hours time-out now happen in every player's game, in step with the host. A teammate's game no longer runs its own events on its own schedule.
+- **Lockdown doors and levers** work for everyone, and every player gets the same Pitstop field trip.
 - **Lab tests stay out of your way:** test copies start minimized as small windows you can open from the taskbar.
 
 ## New in 0.9.1
