@@ -30,6 +30,8 @@ namespace BaldiTogether
         string lastMirroredEvent = "";
 
         internal void NoteBlockedClientEvents() { clientEventTimersBlocked++; }
+        int seededTripPicks;
+        internal void NoteSeededTripPick() { seededTripPicks++; }
 
         static bool MirroredOnClients(RandomEventType type)
         { return type == RandomEventType.Fog || type == RandomEventType.MysteryRoom || type == RandomEventType.Snap || type == RandomEventType.TimeOut; }
@@ -162,6 +164,7 @@ namespace BaldiTogether
                 + ",\"eventsSent\":" + eventsSent + ",\"eventsMirrored\":" + eventsMirrored + ",\"eventsMirrorEnded\":" + eventsMirrorEnded
                 + ",\"eventsAnnounced\":" + eventsAnnounced + ",\"eventsHostOnly\":" + eventsHostOnly + ",\"eventMismatches\":" + eventMismatches
                 + ",\"buttons\":" + buttons.Count + ",\"acceptedButtons\":" + acceptedButtons + ",\"labButtonPressed\":" + (labButtonPressed ? "true" : "false") + ",\"labButtonDoorsOpenBefore\":" + labButtonDoorsOpenBefore + ",\"lockdownDoors\":" + extraDoors.Values.Count(d => d is LockdownDoor) + ",\"lockdownDoorsOpen\":" + extraDoors.Values.Count(d => d is LockdownDoor && d.open)
+                + ",\"seededTripPicks\":" + seededTripPicks + ",\"tripHub\":\"" + (Singleton<CoreGameManager>.Instance != null && Singleton<CoreGameManager>.Instance.currentFieldTrip != null ? Singleton<CoreGameManager>.Instance.currentFieldTrip.name : "") + "\""
                 + ",\"lastMirroredEvent\":\"" + lastMirroredEvent + "\",\"eventLabStep\":" + eventLabStep;
         }
     }
@@ -191,4 +194,21 @@ namespace BaldiTogether
 
     [HarmonyPatch(typeof(BaldiTV), "AnnounceEvent")]
     static class EventAnnouncePatch { static void Postfix(SoundObject sound) { var r = ModHooks.Current; if (r != null) r.SendEventAnnouncement(sound); } }
+    // The Pitstop picks its field-trip hub with UnityEngine.Random (PrepareLevelData). With more than one weighted trip,
+    // host and clients could build different Pitstops and fail the world match. In co-op the pick is seeded from the
+    // run seed and the floor, the same on every copy. Each player's own trip and its rewards stay local, as in the game.
+    [HarmonyPatch(typeof(PitstopGameManager), "PrepareLevelData")]
+    static class FieldTripPickPatch
+    {
+        static void Prefix(out UnityEngine.Random.State __state)
+        {
+            __state = UnityEngine.Random.state;
+            var r = ModHooks.Current;
+            if (r == null || !r.Active) return;
+            var next = Singleton<CoreGameManager>.Instance == null ? null : Singleton<CoreGameManager>.Instance.nextLevel;
+            UnityEngine.Random.InitState(r.Seed * 31 + (next == null ? 0 : next.levelNo) * 7919 + 17);
+            r.NoteSeededTripPick();
+        }
+        static void Postfix(UnityEngine.Random.State __state) { var r = ModHooks.Current; if (r != null && r.Active) UnityEngine.Random.state = __state; }
+    }
 }
