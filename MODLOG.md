@@ -20,7 +20,14 @@ First Endless run: 7/8. The client still started its own reset timers, because t
 - `-NoModeSync` mutant: 2/8, caught. `-ClientResets` mutant: 5/8, caught.
 - `-Scene SpeedyChallenge -ModeSync`: 5/5; both copies back at the menu, the client's host drop counted as the end of the run. `-NoModeSync` mutant: 1/5, caught.
 - Regression on the new build: core 15/15, events 7/7, NPC sync 15/15, spectator-tour 16/16, compat-fail-tour 3/3, lobby-tour 32/32, transport 26/26 plus the no-keepalive mutant.
-- Not run: the full lab suite with the new mode step, Grapple and Stealthy, other Endless maps, a run long enough for Endless's late students.
+- Full lab suite on 0.9.3 (`private/suite-093.log`): transport, all 14 tours, LAN, NPC sync, core 15/15, encounter 45/45, soak 12/12, link 7/7 with its mutant caught, shop, both shop mutants, events 7/7 (mutant caught), challenge 5/5 (mutant caught), Endless 8/8 (mutant 6/8, caught). One failure: shop-late-ack (the client's delivery failed and the host refunded). It passed 9/9 on the rerun below; this was the run during which the lab windows were being hidden from outside the game.
+
+**Lab copies hidden** (user: "hide the game in the background"):
+- Hiding the game window from outside (SW_HIDE at start, then hiding it again when Unity showed it) still left every copy visible for 2 to 3 s at startup, measured with a 10 ms window sampler. Unity shows its window about 1.6 s in and processes no hide until its loading stall ends.
+- `scripts/lab-window.ps1` now starts each copy on a separate desktop, `WinSta0\BaldiLab`, which is never switched to. The launcher keeps its desktop handle until the game's first input idle; closing it earlier destroyed the empty desktop and the games exited at once (first try).
+- Measured during a core run: 2 game processes, 0 ms with any of their windows on the user's desktop. On the hidden desktop: core 15/15, shop late-ack 9/9, spectator-tour 16/16, steam-tour 17/17.
+- The soak can't run there: a hidden desktop paces frames at 60 Hz (p95 16.78 ms on both copies; vsync off in the mod changed nothing, reverted). The soak alone starts hidden on the user's desktop as before (a 2 to 3 s startup flash): 12/12, mod cost 0.227/0.289 ms, frame p95 3.4 ms.
+- Not run: Grapple and Stealthy challenges, other Endless maps, a run long enough for Endless's late students.
 
 ## 2026-10-27: 0.9.2 second PC, Steam lobby gate, random events, field-trip pick, light lab windows
 

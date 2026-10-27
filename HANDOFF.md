@@ -18,6 +18,7 @@ Updated 2026-10-27. Start here when picking the project up on a new PC. A new se
   - clients skip `Activity.StartResetTimer`, `InstantReset` and `EnvironmentController.RespawnItemIn*`; the host sends each activity reset (kind 1) and each respawned item with its pickup key (kind 2), which rejoins the shared supplies;
   - a team wipe sets two lives (as `EndlessGameManager.EndGame` does) and lets the client run Endless's `RestartLevel`, its results screen.
 - `mapChallenge` and `inventoryChallenge` are in the run state.
+- Lab copies now run hidden by default (user's request), on their own Windows desktop `BaldiLab` (`LabDesktop2` in `scripts/lab-window.ps1`). Hiding the window after it appears left a 2 to 3 s flash, because Unity shows it about 1.6 s after start and processes no hide until its loading stall ends. `-Minimized` gives the older minimized taskbar windows. Measured: 0 ms of any game window on the user's desktop during a core run. The soak is the exception: on the hidden desktop frames are paced at 60 Hz (p95 16.78 ms even with vsync off), so it starts hidden on the user's desktop as before and shows for 2 to 3 s at startup.
 - Lab: `launch-lab.ps1 -Scene <SceneObject> -ModeSync`, `tests/verify-modes.py challenge|endless`, mutants `-NoModeSync` and `-ClientResets`; in the lab suite. Scene names: `SpeedyChallenge`, `GrappleChallenge`, `StealthyChallenge`, `Endless_<Schoolhouse|Factory|Laboratory|Maintenance>_<Small|Medium|Large>`, `EndlessPremadeMedium`, `Camping`, `Farm`.
 
 ### Done in 0.9.2
