@@ -20,6 +20,9 @@ namespace BaldiTogether
         int flowStage;
         float flowAt;
         readonly Dictionary<string, Door> extraDoors = new Dictionary<string, Door>();
+        // Levers and buttons: a client's press is forwarded to the host (Interact kind 4); what they drive replicates.
+        readonly Dictionary<string, GameButtonBase> buttons = new Dictionary<string, GameButtonBase>();
+        int acceptedButtons;
         static readonly System.Reflection.FieldInfo brokenWindow = AccessTools.Field(typeof(Window), "broken");
 
         public void PrepareRunSeed()
@@ -34,12 +37,12 @@ namespace BaldiTogether
             Log("New multiplayer run seed: " + Seed);
         }
 
-        void ResetReplication() { npcSamples.Clear(); extraDoors.Clear(); npcRenderSteps = 0; }
+        void ResetReplication() { npcSamples.Clear(); extraDoors.Clear(); buttons.Clear(); npcRenderSteps = 0; }
 
         void BuildExtraDoors(EnvironmentController ec)
         {
             foreach (Door door in Object.FindObjectsOfType<Door>())
-                if ((door is SwingDoor || door is Window) && door.ec == ec)
+                if ((door is SwingDoor || door is Window || door is LockdownDoor) && door.ec == ec) // lockdown doors: event walls and lever-held obstacles
                 {
                     string path = "";
                     Transform node = door.transform;
@@ -51,6 +54,13 @@ namespace BaldiTogether
                     extraDoors.Add(Key(door) + ":" + (int)door.direction + ":" + path, door);
                 }
             if (extraDoors.Count > 1024) throw new IOException("Extra door limit exceeded.");
+            var ambiguous = new HashSet<string>();
+            foreach (GameButtonBase button in Object.FindObjectsOfType<GameButtonBase>())
+            {
+                string key = Key(button);
+                if (buttons.ContainsKey(key)) ambiguous.Add(key); else buttons.Add(key, button);
+            }
+            foreach (string key in ambiguous) buttons.Remove(key); // two buttons in one spot: neither can be named
         }
 
         void WriteExtraDoors(BinaryWriter writer)

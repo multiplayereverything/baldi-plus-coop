@@ -33,7 +33,7 @@ namespace BaldiTogether
         static bool MirroredOnClients(RandomEventType type)
         { return type == RandomEventType.Fog || type == RandomEventType.MysteryRoom || type == RandomEventType.Snap; }
 
-        void ResetEvents() { lastMirroredEvent = ""; eventLabStep = 0; }
+        void ResetEvents() { lastMirroredEvent = ""; eventLabStep = 0; labButtonPressed = false; labButtonDoorsOpenBefore = -1; }
 
         // Host: one of its events was announced, began or ended.
         internal void SendEventState(RandomEvent randomEvent, byte state)
@@ -101,7 +101,7 @@ namespace BaldiTogether
 
         // Lab (-bt-event-sync, both sides): add the same fog event to each copy's list at world ready, then the host
         // runs it for 6 s. The client must mirror its begin and its end.
-        int eventLabStep; float eventLabNext;
+        int eventLabStep, labButtonDoorsOpenBefore = -1; float eventLabNext; bool labButtonPressed;
         RandomEvent labFog;
         void UpdateEventLab()
         {
@@ -131,6 +131,20 @@ namespace BaldiTogether
             {
                 labFog.End(); Log("LAB events: host ended fog."); eventLabStep = 3;
             }
+            else if (!Hosting && eventLabStep == 1 && readyAcknowledged && now > eventLabNext + 12)
+            {
+                // After the fog: press a lever the host owns (a lockdown door's, when this floor has one).
+                var lever = buttons.Values.FirstOrDefault(b => b != null && GameButtonPatch.HostOwned(b));
+                labButtonDoorsOpenBefore = extraDoors.Values.Count(d => d is LockdownDoor && d.open);
+                if (lever != null)
+                {
+                    Singleton<CoreGameManager>.Instance.GetPlayer(0).Teleport(lever.transform.position - lever.transform.forward * 3);
+                    lever.Clicked(0); labButtonPressed = true;
+                    Log("LAB events: client pressed " + Key(lever) + "; lockdown doors open before: " + labButtonDoorsOpenBefore);
+                }
+                else Log("LAB events: no host-owned button on this floor (" + buttons.Count + " buttons).");
+                eventLabStep = 4;
+            }
         }
 
         string EventDiagnostic()
@@ -144,6 +158,7 @@ namespace BaldiTogether
                 + ",\"clientEventTimersBlocked\":" + clientEventTimersBlocked + ",\"clientEventProbe\":" + (clientEventProbeDone ? "true" : "false")
                 + ",\"eventsSent\":" + eventsSent + ",\"eventsMirrored\":" + eventsMirrored + ",\"eventsMirrorEnded\":" + eventsMirrorEnded
                 + ",\"eventsAnnounced\":" + eventsAnnounced + ",\"eventsHostOnly\":" + eventsHostOnly + ",\"eventMismatches\":" + eventMismatches
+                + ",\"buttons\":" + buttons.Count + ",\"acceptedButtons\":" + acceptedButtons + ",\"labButtonPressed\":" + (labButtonPressed ? "true" : "false") + ",\"labButtonDoorsOpenBefore\":" + labButtonDoorsOpenBefore + ",\"lockdownDoors\":" + extraDoors.Values.Count(d => d is LockdownDoor) + ",\"lockdownDoorsOpen\":" + extraDoors.Values.Count(d => d is LockdownDoor && d.open)
                 + ",\"lastMirroredEvent\":\"" + lastMirroredEvent + "\",\"eventLabStep\":" + eventLabStep;
         }
     }

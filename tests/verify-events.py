@@ -35,12 +35,20 @@ while time.monotonic() < deadline:
     for k in new:
         checks[k] = True
         print("PASS " + k, flush=True)
-    if all(checks.values()):
+    # Lever check only when the floor has a host-owned button (reported, not required, when it has none).
+    if client.get("labButtonPressed"):
+        checks.setdefault("lever_press_host_authoritative", False)
+        if (host.get("acceptedButtons", 0) >= 1 and host.get("lockdownDoorsOpen") == client.get("lockdownDoorsOpen")
+                and (client.get("lockdownDoors", 0) == 0 or client.get("lockdownDoorsOpen") != client.get("labButtonDoorsOpenBefore"))):
+            if not checks["lever_press_host_authoritative"]:
+                print("PASS lever_press_host_authoritative", flush=True)
+            checks["lever_press_host_authoritative"] = True
+    if all(checks.values()) and (client.get("eventLabStep", 0) >= 4 or not client):
         break
     time.sleep(0.5)
 result = {"passed": sum(checks.values()), "failed": len(checks) - sum(checks.values()), "checks": checks,
-          "host": {k: host.get(k) for k in ("eventTypes", "eventsSent", "eventLabStep", "activeEvents")},
-          "client": {k: client.get(k) for k in ("eventTypes", "eventsMirrored", "eventsMirrorEnded", "eventMismatches", "activeEvents", "eventsStarted")}}
+          "host": {k: host.get(k) for k in ("eventTypes", "eventsSent", "eventLabStep", "activeEvents", "buttons", "acceptedButtons", "lockdownDoors", "lockdownDoorsOpen")},
+          "client": {k: client.get(k) for k in ("eventTypes", "eventsMirrored", "eventsMirrorEnded", "eventMismatches", "activeEvents", "eventsStarted", "buttons", "labButtonPressed", "lockdownDoors", "lockdownDoorsOpen")}}
 (root / "artifacts/tests").mkdir(parents=True, exist_ok=True)
 (root / "artifacts/tests/events-verify.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
 print(f"{result['passed']}/{len(checks)} passed")

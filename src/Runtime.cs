@@ -420,6 +420,9 @@ namespace BaldiTogether
                     { door.Clicked(0); acceptedInteractions++; Log("Accepted door from " + sender.Name + ": " + key); }
                     if ((kind == 2 || kind == 3) && activities.TryGetValue(key, out activity) && activity != null && !activity.IsCompleted && Vector3.Distance(sender.Position, activity.transform.position) < 35)
                     { activity.Completed(0, kind == 2); acceptedInteractions++; Log("Accepted activity from " + sender.Name + ": " + key); }
+                    GameButtonBase button;
+                    if (kind == 4 && buttons.TryGetValue(key, out button) && button != null && GameButtonPatch.HostOwned(button) && Vector3.Distance(sender.Position, button.transform.position) < 20)
+                    { button.Clicked(0); acceptedInteractions++; acceptedButtons++; Log("Accepted button from " + sender.Name + ": " + key); }
                 }
                 finally { Applying = false; }
             }
