@@ -1,6 +1,6 @@
 # Baldi Together development
 
-Before starting work, read `../handoff.md` (in the game installation root) and this project's `README.md`. Use the handoff for current state, active files, failed attempts and next steps, and the README for supported behavior and known limitations. Keep the handoff current when those details change.
+Before starting work, read `HANDOFF.md` (current state, open items and dev setup on a new PC) and this project's `README.md`. On the original PC an older, longer `../handoff.md` also exists in the game folder; it is not in git. Use the handoff for current state, active files, failed attempts and next steps, and the README for supported behavior and known limitations. Keep the handoff current when those details change.
 
 ## Code graph (use it first)
 

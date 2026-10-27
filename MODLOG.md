@@ -45,7 +45,11 @@
 - **Test-script race found:** right after a failed delivery, the client's last snapshot could still show the pre-reservation wallet, so it bought again while the item was reserved. The client step now waits for its ack to be sent plus 1 s.
 - **Verifier fixes:** exact purchase counts and the owned count after buying (the glue stick itself counts) became "at least" checks, or a count recorded when the price was shown.
 
-**Alt+Tab:** not tested. The only true test opens a visible game window and sends Alt+Tab keystrokes to the desktop, so it waits for the user's OK. The 0.9.0 keepalive already covers the likely failure path, a stalled host making clients migrate.
+**Alt+Tab:** still not tested. The 0.9.0 keepalive already covers the likely failure path, a stalled host making clients migrate.
+- After 0.9.1 the user said yes to the visible test. Setup: a host and a client from the same game folder, which is the user's setup, in a soak run so nobody gets caught. Keystrokes come from the desktop-control tool, because Windows blocks foreground changes from a background script.
+- Attempt 1: the host crashed at BepInEx startup. It lost the race for the shared `BepInEx.cfg` against the client, which started 3 s later (`ConfigFile.Save` IOException, then a NullReferenceException in `InputManager`). This is a same-folder hazard, not a mod bug. The script now starts the client only after the host has logged the mod.
+- Attempt 2: both copies reached the same level. The desktop-control grant for "Baldi's Basics Plus" did not cover the `baldi.exe` windows, and adding `baldi.exe` was declined. No keys were sent, and the user then asked to stop the mods for now.
+- To resume: run `alttab-pair.ps1` (kept in `private/alttab-pair.ps1`), grant desktop control of `baldi.exe`, press Alt+Tab away from the host for over 15 s and back, then write `private/alttab-done.txt`.
 
 **Encounter 44/45 found:** the full suite reproduced it, and the new failure capture kept the evidence.
 - Run 1, 44/45: the client never counted its Pomp appointment, but was rewarded. Run 2, 41/45: the host logged a remote Pomp assignment, then a cancel; the client's Pomp counters stayed at 0, so it never applied the appointment.
