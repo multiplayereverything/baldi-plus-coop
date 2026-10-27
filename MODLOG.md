@@ -39,7 +39,7 @@
 - Step 1: `EnvironmentController.StartEventTimers` is a no-op on client worlds; a challenge scene calls it directly. `timeLimitChallenge` is now in the run state (protocol 15).
   - Proof: `client_events_host_only` in core-live, passed; the `-ClientEvents` mutant fails it.
 - Step 2: the host sends each event's announcement, begin and end (`Op.EventState`, by list index and type). Clients play the jingle and the Baldi TV intro, and mirror Fog, Mystery Room, Snap (ruler) and TimeOut with their own end timer disabled. TimeOut on a client has no Baldi anger (the host's). Other events stay host-only; their NPC and door effects already replicate.
-  - Test: `launch-lab.ps1 -EventSync` with `tests/verify-events.py`; mutant `-NoEventSync`. EVENTSRESULT
+  - Test: `launch-lab.ps1 -EventSync` with `tests/verify-events.py`; mutant `-NoEventSync`. Result: 7/7 (the event list matched on both sides, the client mirrored the fog and ended it with the host, and its own timers stayed off). The mutant: 2/7, caught. The lab floor had no host-owned lever, so the lever step logged a skip.
 - Lockdown doors (event walls and lever obstacles) are now in the host door sync. Game buttons that drive world objects (not elevators, not manager functions) are forwarded to the host as interaction kind 4.
 - Late NPCs (Balder, student crowd): the research note thought they never reached clients. The host rebuilds its NPC list for every snapshot, and clients spawn missing replicas by index (`EnsureReplicaNpc`), so they do. Not yet confirmed in a lab run.
 
@@ -55,7 +55,7 @@ Next batch, with a lab start path for each mode.
 - copies start minimized, titled ("Baldi lab - host"), 480x270 windowed, at BelowNormal priority, with `-bt-lab-light` (quality 0, 60 FPS cap; the soak runs uncapped);
 - each window's restore spot is parked at the right edge;
 - placed once at launch, never touched again.
-- Proof: core-live 15/15 and steam-tour in minimized windows, plus the full suite (SUITE092).
+- Proof: core-live 15/15 and steam-tour in minimized windows, plus the full suite on the merged 0.9.2 build: every tour (steam-tour 17/17), LAN 15/15, NPC sync 15/15, core 15/15, encounter 45/45, soak 12/12 (hidden, game settings: worst mod cost 0.15 ms host, 0.21 ms client), link 7/7 with the mutant caught, and the four shop runs. No retries.
 
 **Not done (needs the user):** the Alt+Tab focus test (sends keys to the desktop); a two-account Steam session; a playtest with friends.
 

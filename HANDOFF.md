@@ -4,32 +4,45 @@ Updated 2026-10-27. Start here when picking the project up on a new PC. A new se
 
 ## Where things stand
 
-- **Version 0.9.1**, protocol 14, exact version match required. Released as a GitHub pre-release: https://github.com/multiplayereverything/baldi-plus-coop/releases/tag/v0.9.1
+- **Version 0.9.2**, protocol 15, exact version match required. Released as a GitHub pre-release: https://github.com/multiplayereverything/baldi-plus-coop/releases/tag/v0.9.2
 - Target: Baldi's Basics Plus **0.14.5** (Steam, app 1275890), Windows x64, Unity 2020.3.49f1.
 - Two builds from one source tree: BepInEx 5.4.23.5 (x64) and MelonLoader 0.7.3. They play together; each game copy uses one loader.
 - Online play: Steam lobbies and P2P (the game's own Steamworks.NET) or LAN. No global relay; it was removed at the user's request.
-- Work was **paused** on 2026-10-26 at the user's request. Nothing was left running.
+- Second PC (2026-10-27): the repo lives outside the game folder (`Desktop/AIStuff/ai-work-pc-games/Baldi Multipplayer Mod`); see the dev setup below.
 
-### Done in 0.9.1
+### Done in 0.9.2
 
-- Glue stick priced per player (1000 + 500 per glue stick owned, sold out at 4).
-- Shop purchases confirmed after the 12 s deadline are settled for 120 s (refund and restock, or sale).
-- Pomp fix: a Mrs. Pomp appointment that reached a client before its Pomp replica existed was dropped. The client now retries it for 5 s. This was the long-standing "encounter 44/45".
-- Lab: auto-join retries, failure evidence capture (`scripts/save-failure.ps1` to `private/failures/`), `scripts/shop-test.ps1`, `launch-lab.ps1 -NoBuild` for A/B runs of prebuilt DLLs.
+- Repo outside the game folder: `scripts/paths.ps1`, `-bt-workspace`, `-bt-shared`.
+- Steam: only members of the host's lobby can connect (`steam-lobby-gate`, with a mutant).
+- Random events:
+  - client worlds never start their own event timers;
+  - `timeLimitChallenge` is in the run state;
+  - the host sends announce, begin and end (`Op.EventState`); clients mirror Fog, Mystery Room, Snap and TimeOut.
+  - Test: `launch-lab.ps1 -EventSync` with `tests/verify-events.py`, and the `-NoEventSync` mutant; both are in the lab suite.
+- Lockdown doors are in the host door sync. Levers and other world buttons are forwarded to the host (interaction kind 4).
+- The Pitstop's field-trip hub pick is seeded from the run seed and the floor.
+- Lab copies start minimized as small titled windows, at low priority and quality (`scripts/lab-window.ps1`). The soak runs hidden with the game's own settings.
+- Quiet-PC soak: 12/12, worst mod cost 0.15 to 0.21 ms per frame.
 
 ### Open
 
-1. **Alt+Tab test not done.** The user approved a visible test; no keys were sent. Two windows from the same folder reached the same level, but desktop control of the `baldi.exe` windows was declined. Steps are in MODLOG (2026-10-26 entry, "Alt+Tab").
-2. **Soak timing limits unverified.** The two-floor soak's playability checks pass, but its timing limits failed while other games loaded the CPU. 0.9.0 fails the same way under the same load. Rerun `launch-lab.ps1 -Soak` plus `tests/verify-perf.py 700` on a quiet PC. Quiet-PC baseline: about 0.2 ms mod cost per frame.
-3. **Never tested with real players:** two different Steam accounts, friends on separate PCs, four players.
-4. Same-folder setups (two copies from one game folder) can race for `BepInEx.cfg` at startup. Separate lab copies avoid it.
+1. **Alt+Tab test not done.** It needs visible windows and keystrokes on the user's desktop. The user approved it once, but desktop control of `baldi.exe` was declined. Ask before running it.
+2. **Never tested with real players:** two different Steam accounts, friends on separate PCs, four players.
+3. **Events still host-only on clients:** Flood (water, whirlpools), Party (balloons, party pickup), Gravity (flippers, flipped view), BalderDash and Student Shuffle. Their NPCs and doors replicate, but each player's own visuals do not. The private research note `private/notes/events-modes-research.md` has the per-event details (decompiled line numbers, not for the public repo).
+4. **Lever forwarding not proven in a lab run.** Floor 1 of the lab seed has no host-owned lever; the event lab presses one when the floor has it.
+5. **Challenges and Endless:**
+   - a challenge win makes the host quit, which disconnects everyone;
+   - Endless repeats notebooks, but the mod's notebook model is one-time;
+   - Endless item respawns are not in the shared catalog.
+   - Neither mode has a lab start path yet.
+6. Same-folder setups (two copies from one game folder) can race for `BepInEx.cfg` at startup. Separate lab copies avoid it.
 
 ### Next steps
 
-1. On a quiet PC: rerun the soak, then the full `scripts/lab-suite.ps1`.
-2. The Alt+Tab test, with the user's OK each time; it needs visible windows and real keystrokes.
+1. Challenges and Endless: a lab start path per mode, then win and results broadcast, a notebook respawn op, and host item respawns.
+2. Mirror the remaining events' local effects (Flood, Party, Gravity), with host-owned positions.
 3. A two-account Steam session, then a playtest with friends. Ask testers for F2 `save` reports and `Player.log`.
-4. Every version: tagged GitHub release (test builds as pre-releases), CHANGELOG/README/MODLOG updated, `um publish check <release folder> --game ../BALDI_Data` passing.
+4. Every version: tagged GitHub release (test builds as pre-releases); CHANGELOG, README, MODLOG and this file updated; `um publish check <release folder> --game <game>/BALDI_Data` passing.
 
 ## Dev setup on a new PC
 

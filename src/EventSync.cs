@@ -26,7 +26,7 @@ namespace BaldiTogether
         static List<RandomEventType> CurrentEventTypeList(EnvironmentController ec) { return (List<RandomEventType>)CurrentTypesField.GetValue(ec); }
 
         int clientEventTimersBlocked, eventsSent, eventsMirrored, eventsMirrorEnded, eventsAnnounced, eventsHostOnly, eventMismatches;
-        bool clientEventProbeDone, applyingEvent;
+        bool clientEventProbeDone;
         string lastMirroredEvent = "";
 
         internal void NoteBlockedClientEvents() { clientEventTimersBlocked++; }
@@ -77,8 +77,6 @@ namespace BaldiTogether
                 return true;
             }
             if (!MirroredOnClients(randomEvent.Type)) { if (state == EventBegun) eventsHostOnly++; return true; }
-            applyingEvent = true;
-            try
             {
                 if (state == EventBegun && !randomEvent.Active)
                 {
@@ -91,7 +89,6 @@ namespace BaldiTogether
                 }
                 else if (state == EventEnded && randomEvent.Active) { randomEvent.End(); eventsMirrorEnded++; }
             }
-            finally { applyingEvent = false; }
             return true;
         }
 

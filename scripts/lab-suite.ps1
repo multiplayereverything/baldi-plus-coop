@@ -92,5 +92,19 @@ foreach ($shop in @(@{}, @{ LateAck = $true }, @{ Mutant = 'late-ack' }, @{ Muta
     if ($LASTEXITCODE -ne 0) { $failed += $label }
 }
 
+# Random events: the host runs a fog event and the client mirrors it; the mutant sends no event states and must fail.
+foreach ($run in @(@{ Label = 'events'; Launch = @{ EventSync = $true } }, @{ Label = 'events-mutant'; Launch = @{ EventSync = $true; NoEventSync = $true } })) {
+    Start-Sleep -Seconds 3
+    $launch = $run.Launch
+    & (Join-Path $PSScriptRoot 'launch-lab.ps1') @launch | Select-Object -Last 1
+    try {
+        & $python -I (Join-Path $modRoot 'tests/verify-events.py') 150 | Select-Object -Last 1 | ForEach-Object { "$($run.Label): $_" }
+        $ok = $LASTEXITCODE -eq 0
+        if ($run.Label -eq 'events-mutant') { if ($ok) { $failed += 'events-mutant-not-caught' } else { 'events-mutant: caught' } }
+        elseif (!$ok) { $failed += 'events'; & (Join-Path $PSScriptRoot 'save-failure.ps1') -Name 'events' }
+    }
+    finally { Stop-LabPair }
+}
+
 if ($failed.Count) { Write-Output "FAILED: $($failed -join ', ')"; exit 1 }
 Write-Output 'Lab suite passed.'
