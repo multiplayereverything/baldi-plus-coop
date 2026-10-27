@@ -15,6 +15,15 @@ This project has a Graphify knowledge graph in `graphify-out/`. It covers all co
 - **After changing code,** run `graphify update .` (code only, local, no LLM) so the graph stays current. Use `/graphify . --update` when docs changed.
 - **If `graphify-out/` is missing,** rebuild it with `/graphify .`. `.graphifyignore` excludes media and old test contracts; `graphify-out/` is git-ignored.
 
+## Coding guidelines (karpathy-guidelines)
+
+Load the `andrej-karpathy-skills:karpathy-guidelines` skill before writing, reviewing or refactoring code here, and follow it:
+
+- **Think before coding.** State assumptions and tradeoffs. The user asked sessions not to stop for questions, so make the reasonable call and write the assumption into MODLOG.md or HANDOFF.md instead of asking. Only stop to ask when a wrong guess would be costly or hard to undo.
+- **Simplicity first.** Write the least code that solves the problem: no speculative features, options or abstractions.
+- **Surgical changes.** Touch only what the task needs and match the surrounding style (`TogetherRuntime` partial files, one feature per file). Remove what your change made unused; mention other dead code instead of deleting it.
+- **Goal-driven.** Turn each task into a check that can fail: a lab verifier in `tests/` plus a mutant that must fail it, as the existing features do. Loop until it passes.
+
 Keep README.md and MODLOG.md current with implemented features, evidence and limitations. Build both loaders with `scripts/build.ps1`; run `scripts/test.ps1` after transport changes. Never distribute game assemblies, private decompilation, lab copies or dependency/toolkit caches. Each game copy uses exactly one loader.
 
 Requested toolkits are checked out in `toolkits/anti-slop`, `toolkits/universal-modder-source`, `toolkits/rea`, and `toolkits/watch-skill-source`. Read their applicable skills when using them. Anti-slop during-development mode was selected for the initial session; future sessions follow its mode selection rules. REA is already connected in the initial session. Watch Skill is installed locally with standard extras; `scripts/watch.ps1` confines storage to `private/watch-data`. Native Windows Computer Use was unavailable during the initial session; do not claim UI click-through from source review.
