@@ -118,11 +118,11 @@ namespace BaldiTogether
             }
             autoStartAt = Time.realtimeSinceStartup + 20;
             Application.runInBackground = true;
-            if (Lab.Enabled && Lab.HasArg("-bt-lab-light"))
+            if (Lab.Enabled && Lab.HasArg("-bt-lab-light") && !Lab.HasArg("-bt-lab-uncapped")) // the soak measures with the game's own settings
             {
-                // Lab copies share the PC with the user: lowest quality, and 60 FPS unless a timing test runs uncapped.
+                // Lab copies share the PC with the user: lowest quality and 60 FPS.
                 QualitySettings.SetQualityLevel(0, true); QualitySettings.vSyncCount = 0;
-                if (!Lab.HasArg("-bt-lab-uncapped")) Application.targetFrameRate = 60;
+                Application.targetFrameRate = 60;
             }
             Log("BaldiTogether " + ModVersion + " ready. F5 opens the LAN lobby. Game SHA256 " + gameHash);
         }

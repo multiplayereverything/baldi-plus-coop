@@ -1,5 +1,5 @@
 # Dot-sourced by the lab scripts. Test copies of the game must never get in the user's way:
-# - small and windowed (480x270), with the mod's -bt-lab-light (lowest quality, 60 FPS cap; launch-lab -Soak adds -bt-lab-uncapped);
+# - small and windowed (480x270), with the mod's -bt-lab-light (lowest quality, 60 FPS cap); the soak (-bt-lab-uncapped) runs hidden with the game's own settings so frame times compare;
 # - started minimized without activation and kept minimized in the taskbar (SetWindowPlacement, SW_SHOWMINNOACTIVE),
 #   titled ("Baldi lab - host"), with the restore spot parked at the right edge of the primary monitor, stacked by
 #   slot, so clicking one brings it up small at the side; never topmost, never activated, never re-minimized;
@@ -34,7 +34,11 @@ $labWindowArgs = @('-screen-fullscreen', '0', '-screen-width', "$labWindowWidth"
 # Starts BALDI.exe as a parked lab window and returns its Process. Slot 0 is the top of the right edge.
 function Start-LabGame([string]$FilePath, [string[]]$ArgumentList, [string]$WorkingDirectory, [int]$Slot = 0, [string]$Title = 'Baldi lab', [switch]$Hidden) {
     if (!$WorkingDirectory) { $WorkingDirectory = Split-Path $FilePath -Parent }
-    $id = [LabWindow]::Start($FilePath, ((@($ArgumentList) + $labWindowArgs) -join ' '), $WorkingDirectory, [bool]$Hidden)
+    # The soak (-bt-lab-uncapped) measures frame time the way its baseline did: hidden, with the game's own window
+    # settings. A small windowed copy runs at the monitor's refresh rate, so its frame p95 sits at exactly 16.7 ms.
+    $extra = $labWindowArgs
+    if (@($ArgumentList) -contains '-bt-lab-uncapped') { $extra = @(); $Hidden = $true }
+    $id = [LabWindow]::Start($FilePath, ((@($ArgumentList) + $extra) -join ' '), $WorkingDirectory, [bool]$Hidden)
     $process = Get-Process -Id $id
     if (!$Hidden) {
         # Place it once from a detached hidden PowerShell (launch-lab exits right after starting the copies):
